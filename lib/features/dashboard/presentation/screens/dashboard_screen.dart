@@ -1125,10 +1125,29 @@ class _ProfileSheet extends StatelessWidget {
               subtitle: 'Your data stays on this device',
               color: AppColors.rose,
               isDark: isDark,
-              onTap: () {
-                Navigator.pop(context);
-                _confirmSignOut(context);
-              },
+              onTap: () => showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('Sign out?'),
+                  content: const Text('Your local data will be preserved.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.pop(context); // close dialog
+                        Navigator.pop(context); // close sheet
+                        FirebaseAuth.instance.signOut();
+                      },
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.rose),
+                      child: const Text('Sign Out'),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
 
@@ -1138,29 +1157,6 @@ class _ProfileSheet extends StatelessWidget {
     ).animate().slideY(begin: 0.1, duration: 250.ms, curve: Curves.easeOut);
   }
 
-  void _confirmSignOut(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('Your local data will be preserved.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              FirebaseAuth.instance.signOut();
-            },
-            style:
-                FilledButton.styleFrom(backgroundColor: AppColors.rose),
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _MenuItem extends StatelessWidget {
