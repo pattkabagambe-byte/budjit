@@ -359,14 +359,17 @@ class _GoalCard extends StatelessWidget {
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
+                child: FilledButton.icon(
                   onPressed: onAddFunds,
                   icon: const Icon(Icons.add_rounded, size: 16),
-                  label: Text('Add funds · ${Fmt.compact(remaining, currency: currency)} to go'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: color,
-                    side: BorderSide(color: color.withOpacity(0.4)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  label: Text(
+                    'Add savings  ·  ${Fmt.compact(remaining, currency: currency)} to go',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: color,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
@@ -594,11 +597,29 @@ class _AddFundsSheet extends StatefulWidget {
 class _AddFundsSheetState extends State<_AddFundsSheet> {
   final _ctrl = TextEditingController();
   bool _saving = false;
+  double _enteredAmount = 0;
+
+  // Quick-pick amounts scaled to currency
+  List<double> get _quickAmounts {
+    final remaining = widget.goal.targetAmount - widget.goal.currentAmount;
+    final r = remaining.clamp(1, double.infinity);
+    // Sensible presets: 10%, 25%, 50% of remaining, and round thousands
+    return [5000, 10000, 25000, 50000, 100000]
+        .where((v) => v.toDouble() <= r * 1.1) // allow slight overshoot
+        .take(4)
+        .map((v) => v.toDouble())
+        .toList();
+  }
 
   @override
   void dispose() {
     _ctrl.dispose();
     super.dispose();
+  }
+
+  void _setAmount(double v) {
+    _ctrl.text = v.toInt().toString();
+    setState(() => _enteredAmount = v);
   }
 
   Future<void> _add() async {
@@ -610,47 +631,230 @@ class _AddFundsSheetState extends State<_AddFundsSheet> {
     if (mounted) Navigator.pop(context);
   }
 
+  Color _goalColor() {
+    try {
+      return Color(int.parse('FF${widget.goal.colorHex.replaceAll('#', '')}', radix: 16));
+    } catch (_) {
+      return AppColors.emerald;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final goal = widget.goal;
+    final color = _goalColor();
+    final current = goal.currentAmount;
+    final target = goal.targetAmount;
+    final remaining = (target - current).clamp(0, double.infinity);
+    final preview = (current + _enteredAmount).clamp(0, target);
+    final previewRatio = target > 0 ? (preview / target).clamp(0.0, 1.0) : 0.0;
+    final currentRatio = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
+
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 20, right: 20, top: 4),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 20, right: 20, top: 4,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Goal header
           Row(
             children: [
-              Text(widget.goal.emoji, style: const TextStyle(fontSize: 28)),
-              const SizedBox(width: 10),
+              Text(goal.emoji, style: const TextStyle(fontSize: 32)),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.goal.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                    Text('${Fmt.money(widget.goal.currentAmount, currency: widget.currency)} saved', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(goal.name,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    Text(
+                      '${Fmt.money(current, currency: widget.currency)} saved of ${Fmt.money(target, currency: widget.currency)}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+
+          // Live progress preview
+          Stack(
+            children: [
+              // Base bar (current)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: previewRatio,
+                  minHeight: 12,
+                  backgroundColor: color.withValues(alpha: 0.12),
+                  valueColor: AlwaysStoppedAnimation(
+                    _enteredAmount > 0 ? color.withValues(alpha: 0.4) : color,
+                  ),
+                ),
+              ),
+              // Preview overlay (added amount in solid)
+              if (_enteredAmount > 0)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: currentRatio,
+                    minHeight: 12,
+                    backgroundColor: Colors.transparent,
+                    valueColor: AlwaysStoppedAnimation(color),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                Fmt.money(current, currency: widget.currency),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),
+              ),
+              Text(
+                _enteredAmount > 0
+                    ? '→ ${Fmt.money((current + _enteredAmount).clamp(0, target), currency: widget.currency)} (${(previewRatio * 100).toStringAsFixed(0)}%)'
+                    : '${(currentRatio * 100).toStringAsFixed(0)}% saved',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: _enteredAmount > 0 ? color : Colors.grey,
+                ),
+              ),
+              Text(
+                Fmt.money(target, currency: widget.currency),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Quick-amount chips
+          if (_quickAmounts.isNotEmpty) ...[
+            Text(
+              'Quick add',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white54 : Colors.black45,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ..._quickAmounts.map((v) => GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _setAmount(v);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _enteredAmount == v
+                          ? color
+                          : color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: _enteredAmount == v
+                            ? color
+                            : color.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      Fmt.compact(v, currency: widget.currency),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _enteredAmount == v ? Colors.white : color,
+                      ),
+                    ),
+                  ),
+                )),
+                // "Full remaining" chip
+                if (remaining > 0)
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      _setAmount(remaining.toDouble());
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _enteredAmount == remaining
+                            ? AppColors.navy
+                            : (isDark ? AppColors.darkCard : AppColors.lightBg),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                        ),
+                      ),
+                      child: Text(
+                        'Complete it 🏆',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _enteredAmount == remaining
+                              ? Colors.white
+                              : (isDark ? Colors.white : AppColors.navy),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Custom amount input
           TextField(
             controller: _ctrl,
             keyboardType: TextInputType.number,
-            autofocus: true,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly, ThousandsSeparatorInputFormatter()],
-            decoration: InputDecoration(labelText: 'Amount to add', prefixText: '${widget.currency} '),
+            autofocus: _quickAmounts.isEmpty,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              ThousandsSeparatorInputFormatter(),
+            ],
+            onChanged: (v) {
+              final parsed = double.tryParse(v.replaceAll(',', '')) ?? 0;
+              setState(() => _enteredAmount = parsed);
+            },
+            decoration: InputDecoration(
+              labelText: 'Or enter custom amount',
+              prefixText: '${widget.currency} ',
+            ),
           ),
           const SizedBox(height: 20),
+
           FilledButton(
-            onPressed: _saving ? null : _add,
+            onPressed: (_saving || _enteredAmount <= 0) ? null : _add,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.emerald,
-              minimumSize: const Size.fromHeight(52),
+              backgroundColor: color,
+              minimumSize: const Size.fromHeight(54),
             ),
             child: _saving
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Add Funds', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(
+                    _enteredAmount > 0
+                        ? 'Add ${Fmt.compact(_enteredAmount, currency: widget.currency)} to goal'
+                        : 'Add Savings',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  ),
           ),
           const SizedBox(height: 24),
         ],

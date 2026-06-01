@@ -346,14 +346,7 @@ class _ProfileHeader extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: AppColors.emerald.withOpacity(0.2),
-            backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-            child: user?.photoURL == null
-                ? Text(initial, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.emerald))
-                : null,
-          ),
+          UserAvatar(photoUrl: user?.photoURL, displayName: name, radius: 40),
           const SizedBox(height: 12),
           Text(name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: isDark ? Colors.white : AppColors.navy)),
           if (email != null) Text(email, style: const TextStyle(fontSize: 13, color: Colors.grey)),

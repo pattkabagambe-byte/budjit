@@ -5,6 +5,70 @@ import 'package:shimmer/shimmer.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
+// ── User Avatar (handles network image + fallback initials) ───────────────────
+
+class UserAvatar extends StatelessWidget {
+  final String? photoUrl;
+  final String displayName;
+  final double radius;
+
+  const UserAvatar({
+    super.key,
+    required this.photoUrl,
+    required this.displayName,
+    this.radius = 20,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final initial =
+        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+    final fontSize = radius * 0.7;
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppColors.emerald.withValues(alpha: 0.18),
+      child: ClipOval(
+        child: photoUrl != null && photoUrl!.isNotEmpty
+            ? Image.network(
+                photoUrl!,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+                // While loading — show initial behind it
+                loadingBuilder: (_, child, progress) =>
+                    progress == null ? child : _Initial(initial, fontSize),
+                // On error — show initial
+                errorBuilder: (_, __, ___) => _Initial(initial, fontSize),
+              )
+            : _Initial(initial, fontSize),
+      ),
+    );
+  }
+}
+
+class _Initial extends StatelessWidget {
+  final String letter;
+  final double fontSize;
+  const _Initial(this.letter, this.fontSize);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.emerald.withValues(alpha: 0.18),
+      alignment: Alignment.center,
+      child: Text(
+        letter,
+        style: TextStyle(
+          color: AppColors.emerald,
+          fontWeight: FontWeight.w800,
+          fontSize: fontSize,
+        ),
+      ),
+    );
+  }
+}
+
 // ── Gradient Card ─────────────────────────────────────────────────────────────
 
 class GradientCard extends StatelessWidget {

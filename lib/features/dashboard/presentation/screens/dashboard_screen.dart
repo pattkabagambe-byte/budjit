@@ -897,22 +897,7 @@ class _ProfileMenu extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.emerald.withValues(alpha: 0.2),
-            backgroundImage:
-                user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-            child: user?.photoURL == null
-                ? Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                    style: const TextStyle(
-                      color: AppColors.emerald,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                    ),
-                  )
-                : null,
-          ),
+          UserAvatar(photoUrl: user?.photoURL, displayName: name, radius: 20),
           // Online / guest indicator dot
           Positioned(
             right: 0,
@@ -1002,23 +987,7 @@ class _ProfileSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: AppColors.emerald.withValues(alpha: 0.15),
-                  backgroundImage: user?.photoURL != null
-                      ? NetworkImage(user!.photoURL!)
-                      : null,
-                  child: user?.photoURL == null
-                      ? Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                          style: const TextStyle(
-                            color: AppColors.emerald,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 20,
-                          ),
-                        )
-                      : null,
-                ),
+                UserAvatar(photoUrl: user?.photoURL, displayName: name, radius: 26),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
