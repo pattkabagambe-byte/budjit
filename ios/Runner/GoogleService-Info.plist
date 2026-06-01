@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>772109770995-0ghv5eo9r9tbsu6srtv2hg7t4kcf1ne5.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.772109770995-0ghv5eo9r9tbsu6srtv2hg7t4kcf1ne5</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>772109770995-jnfeg9arn554l14ov9j9gkm6iqh0b9ub.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCl_Nc-TUQfYZEG-ar9gw06-qw3eX0SJlY</string>
+	<key>GCM_SENDER_ID</key>
+	<string>772109770995</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>app.budjit.budjit</string>
+	<key>PROJECT_ID</key>
+	<string>potentia-motus</string>
+	<key>STORAGE_BUCKET</key>
+	<string>potentia-motus.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:772109770995:ios:99b5201aa9a1d41b555786</string>
+</dict>
+</plist>

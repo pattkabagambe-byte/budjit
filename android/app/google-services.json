@@ -1,0 +1,106 @@
+{
+  "project_info": {
+    "project_number": "772109770995",
+    "project_id": "potentia-motus",
+    "storage_bucket": "potentia-motus.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:772109770995:android:7838fcd9426f2cd0555786",
+        "android_client_info": {
+          "package_name": "app.budjit.budjit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "772109770995-0qjmq8ga51pd5sgll48i53iqe89bvoo0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.budjit.budjit",
+            "certificate_hash": "954c32774acc99cbd6874521a8bb7fa1bed3a702"
+          }
+        },
+        {
+          "client_id": "772109770995-dbc56ba1adcr5sdnpn9rhe8daajm13gk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoPUWyYqBeaZDxZTsee3gUh349ustgxTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "772109770995-dbc56ba1adcr5sdnpn9rhe8daajm13gk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "772109770995-0ghv5eo9r9tbsu6srtv2hg7t4kcf1ne5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.budjit.budjit"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:772109770995:android:77997713234f1665555786",
+        "android_client_info": {
+          "package_name": "com.potentia.momorates"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "772109770995-jnfeg9arn554l14ov9j9gkm6iqh0b9ub.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.potentia.momorates",
+            "certificate_hash": "954c32774acc99cbd6874521a8bb7fa1bed3a702"
+          }
+        },
+        {
+          "client_id": "772109770995-po870a2kg01hh7v36svk9huo82073pnn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.potentia.momorates",
+            "certificate_hash": "9596d00982ecacb841c67cbed002dbaffe429f8d"
+          }
+        },
+        {
+          "client_id": "772109770995-dbc56ba1adcr5sdnpn9rhe8daajm13gk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoPUWyYqBeaZDxZTsee3gUh349ustgxTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "772109770995-dbc56ba1adcr5sdnpn9rhe8daajm13gk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "772109770995-0ghv5eo9r9tbsu6srtv2hg7t4kcf1ne5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.budjit.budjit"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
