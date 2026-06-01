@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +12,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/shared_widgets.dart';
+import '../../../auth/presentation/screens/auth_screen.dart';
 import '../../../transactions/domain/category_data.dart';
 import '../../../transactions/presentation/widgets/add_transaction_sheet.dart';
 
@@ -250,21 +250,7 @@ class DashboardScreen extends ConsumerWidget {
                 },
               ),
               const SizedBox(width: 4),
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.emerald.withOpacity(0.2),
-                backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-                child: user?.photoURL == null
-                    ? Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                        style: const TextStyle(
-                          color: AppColors.emerald,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      )
-                    : null,
-              ),
+              _ProfileMenu(user: user, name: name, isDark: isDark, ref: ref),
             ],
           ),
         ],
@@ -884,6 +870,357 @@ class _TxTile extends StatelessWidget {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Profile Menu ──────────────────────────────────────────────────────────────
+
+class _ProfileMenu extends StatelessWidget {
+  final User? user;
+  final String name;
+  final bool isDark;
+  final WidgetRef ref;
+
+  const _ProfileMenu({
+    required this.user,
+    required this.name,
+    required this.isDark,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showMenu(context),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.emerald.withValues(alpha: 0.2),
+            backgroundImage:
+                user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
+            child: user?.photoURL == null
+                ? Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                    style: const TextStyle(
+                      color: AppColors.emerald,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  )
+                : null,
+          ),
+          // Online / guest indicator dot
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: (user != null && !user!.isAnonymous)
+                    ? AppColors.emerald
+                    : AppColors.amber,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? AppColors.darkBg : Colors.white,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMenu(BuildContext context) {
+    final isGuest = user == null || user!.isAnonymous;
+    final email = user?.email ?? user?.displayName ?? 'Guest';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ProfileSheet(
+        user: user,
+        email: email,
+        isGuest: isGuest,
+        isDark: isDark,
+        ref: ref,
+      ),
+    );
+  }
+}
+
+class _ProfileSheet extends StatelessWidget {
+  final User? user;
+  final String email;
+  final bool isGuest;
+  final bool isDark;
+  final WidgetRef ref;
+
+  const _ProfileSheet({
+    required this.user,
+    required this.email,
+    required this.isGuest,
+    required this.isDark,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final name = user?.displayName ?? (isGuest ? 'Guest User' : 'User');
+    final bgColor = isDark ? AppColors.darkCard : Colors.white;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 4),
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white24 : Colors.black12,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+
+          // Profile info header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: AppColors.emerald.withValues(alpha: 0.15),
+                  backgroundImage: user?.photoURL != null
+                      ? NetworkImage(user!.photoURL!)
+                      : null,
+                  child: user?.photoURL == null
+                      ? Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                          style: const TextStyle(
+                            color: AppColors.emerald,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: isDark ? Colors.white : AppColors.navy,
+                        ),
+                      ),
+                      Text(
+                        isGuest ? 'Guest — data on this device only' : email,
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.grey),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isGuest)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.emerald.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'Signed in',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppColors.emerald,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          Divider(
+              height: 1,
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+
+          // Menu items
+          if (isGuest) ...[
+            _MenuItem(
+              icon: Icons.login_rounded,
+              label: 'Sign in with Google',
+              subtitle: 'Sync data across devices',
+              color: AppColors.sky,
+              isDark: isDark,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const AuthScreen(isLinking: true),
+                ));
+              },
+            ),
+            _MenuItem(
+              icon: Icons.email_rounded,
+              label: 'Sign in with Email',
+              subtitle: 'Create or log into an account',
+              color: AppColors.violet,
+              isDark: isDark,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const AuthScreen(isLinking: true),
+                ));
+              },
+            ),
+          ] else ...[
+            _MenuItem(
+              icon: Icons.switch_account_rounded,
+              label: 'Switch account',
+              subtitle: 'Sign in with a different Google account',
+              color: AppColors.sky,
+              isDark: isDark,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const AuthScreen(),
+                ));
+              },
+            ),
+            _MenuItem(
+              icon: Icons.person_outline_rounded,
+              label: 'View profile',
+              subtitle: 'Settings, currency, premium',
+              color: AppColors.violet,
+              isDark: isDark,
+              onTap: () {
+                Navigator.pop(context);
+                navigateToTab(ref, 4);
+              },
+            ),
+            _MenuItem(
+              icon: Icons.logout_rounded,
+              label: 'Sign out',
+              subtitle: 'Your data stays on this device',
+              color: AppColors.rose,
+              isDark: isDark,
+              onTap: () {
+                Navigator.pop(context);
+                _confirmSignOut(context);
+              },
+            ),
+          ],
+
+          const SizedBox(height: 8),
+        ],
+      ),
+    ).animate().slideY(begin: 0.1, duration: 250.ms, curve: Curves.easeOut);
+  }
+
+  void _confirmSignOut(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Sign out?'),
+        content: const Text('Your local data will be preserved.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              FirebaseAuth.instance.signOut();
+            },
+            style:
+                FilledButton.styleFrom(backgroundColor: AppColors.rose),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: isDark ? Colors.white : AppColors.navy,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                size: 18, color: Colors.grey.shade400),
+          ],
+        ),
       ),
     );
   }
