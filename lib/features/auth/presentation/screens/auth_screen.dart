@@ -1,9 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/theme/app_theme.dart';
+
+// Web client ID from google-services.json (oauth_client type 3).
+// Required on Android so GoogleSignIn can produce a valid idToken for Firebase.
+const _kGoogleWebClientId =
+    '772109770995-dbc56ba1adcr5sdnpn9rhe8daajm13gk.apps.googleusercontent.com';
 
 class AuthScreen extends StatefulWidget {
   /// When true, links credentials to the current anonymous account instead of
@@ -33,15 +39,34 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final gUser = await GoogleSignIn().signIn();
-      if (gUser == null) { setState(() => _loading = false); return; }
+      // Passing serverClientId ensures Android generates a valid idToken for Firebase.
+      final googleSignIn = GoogleSignIn(serverClientId: _kGoogleWebClientId);
+      final gUser = await googleSignIn.signIn();
+      if (gUser == null) {
+        // User cancelled the picker — not an error.
+        setState(() => _loading = false);
+        return;
+      }
       final gAuth = await gUser.authentication;
+      if (gAuth.idToken == null) {
+        setState(() {
+          _error = 'Google sign-in did not return a valid token. '
+              'Make sure the SHA-1 fingerprint is registered in Firebase Console '
+              'and Google Sign-In is enabled in Authentication → Sign-in method.';
+          _loading = false;
+        });
+        return;
+      }
       await _applyCredential(GoogleAuthProvider.credential(
         accessToken: gAuth.accessToken,
         idToken: gAuth.idToken,
       ));
     } catch (e) {
-      setState(() { _error = 'Sign in failed. Please try again.'; _loading = false; });
+      final detail = kDebugMode ? '\n\nDebug: $e' : '';
+      setState(() {
+        _error = 'Google sign-in failed. Please try again.$detail';
+        _loading = false;
+      });
     }
   }
 
