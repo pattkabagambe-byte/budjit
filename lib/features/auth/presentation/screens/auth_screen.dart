@@ -28,12 +28,53 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _applyCredential(AuthCredential credential) async {
     final auth = FirebaseAuth.instance;
-    if (widget.isLinking && auth.currentUser != null) {
-      await auth.currentUser!.linkWithCredential(credential);
-      if (mounted) Navigator.of(context).pop();
-    } else {
-      await auth.signInWithCredential(credential);
+    try {
+      if (widget.isLinking && auth.currentUser != null) {
+        await auth.currentUser!.linkWithCredential(credential);
+        if (mounted) Navigator.of(context).pop();
+      } else {
+        await auth.signInWithCredential(credential);
+      }
+    } on FirebaseAuthException catch (e) {
+      // Guest upgrade: Google/Apple account already exists as a separate user.
+      // Sign in to that account instead of linking to the anonymous session.
+      final recoverable = e.code == 'credential-already-in-use' ||
+          e.code == 'email-already-in-use' ||
+          e.code == 'account-exists-with-different-credential' ||
+          e.code == 'provider-already-linked';
+      if (widget.isLinking && recoverable) {
+        // provider-already-linked: anonymous account already has this provider.
+        // Sign in with the credential to resolve to the full account.
+        final existingCredential = e.credential ?? credential;
+        await auth.signInWithCredential(existingCredential);
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+      rethrow;
     }
+  }
+
+  String _authErrorMessage(Object e, {required String provider}) {
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'credential-already-in-use':
+        case 'email-already-in-use':
+          return 'This $provider account is already registered. '
+              'We signed you in to your existing account.';
+        case 'account-exists-with-different-credential':
+          return 'An account with this email already exists. '
+              'Try signing in with the method you used originally.';
+        case 'network-request-failed':
+          return 'Network error. Check your connection and try again.';
+        case 'popup-closed-by-user':
+        case 'cancelled':
+          return '';
+        default:
+          break;
+      }
+    }
+    final detail = kDebugMode ? '\n\nDebug: $e' : '';
+    return '$provider sign-in failed. Please try again.$detail';
   }
 
   Future<void> _signInWithGoogle() async {
@@ -61,10 +102,11 @@ class _AuthScreenState extends State<AuthScreen> {
         accessToken: gAuth.accessToken,
         idToken: gAuth.idToken,
       ));
+      if (mounted) setState(() => _loading = false);
     } catch (e) {
-      final detail = kDebugMode ? '\n\nDebug: $e' : '';
+      final msg = _authErrorMessage(e, provider: 'Google');
       setState(() {
-        _error = 'Google sign-in failed. Please try again.$detail';
+        _error = msg.isEmpty ? null : msg;
         _loading = false;
       });
     }
@@ -80,8 +122,13 @@ class _AuthScreenState extends State<AuthScreen> {
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,
       ));
+      if (mounted) setState(() => _loading = false);
     } catch (e) {
-      setState(() { _error = 'Apple sign in failed.'; _loading = false; });
+      final msg = _authErrorMessage(e, provider: 'Apple');
+      setState(() {
+        _error = msg.isEmpty ? null : msg;
+        _loading = false;
+      });
     }
   }
 
