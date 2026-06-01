@@ -80,8 +80,10 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() { _loading = true; _error = null; });
     try {
-      // Passing serverClientId ensures Android generates a valid idToken for Firebase.
       final googleSignIn = GoogleSignIn(serverClientId: _kGoogleWebClientId);
+      // Sign out of any cached session so the account picker always appears,
+      // letting the user choose a different Google account if they wish.
+      await googleSignIn.signOut();
       final gUser = await googleSignIn.signIn();
       if (gUser == null) {
         // User cancelled the picker — not an error.
