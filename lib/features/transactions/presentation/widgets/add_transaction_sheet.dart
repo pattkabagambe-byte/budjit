@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/ads/ad_manager.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/providers/category_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../categories/presentation/widgets/add_category_sheet.dart';
 import '../../domain/category_data.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
@@ -48,8 +51,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
 
   bool get _isIncome => _tabCtrl.index == 1;
 
-  List<TxCategory> get _cats =>
-      _isIncome ? kIncomeCategories : kExpenseCategories;
+  Future<void> _addCategory() async {
+    final id = await showAddCategorySheet(context, isIncome: _isIncome);
+    if (id != null && mounted) setState(() => _selectedCategoryId = id);
+  }
 
   Future<void> _submit() async {
     final raw = _amountCtrl.text.replaceAll(',', '');
@@ -59,12 +64,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
           .showSnackBar(const SnackBar(content: Text('Enter a valid amount')));
       return;
     }
+    final userId = ref.read(currentUserIdProvider);
     final title = _titleCtrl.text.trim().isEmpty
-        ? categoryByIdOrDefault(_selectedCategoryId, isIncome: _isIncome).label
+        ? resolveCategory(_selectedCategoryId, isIncome: _isIncome, custom: ref.read(customTxCategoriesProvider(userId))).label
         : _titleCtrl.text.trim();
 
     setState(() => _saving = true);
-    final userId = ref.read(currentUserIdProvider);
     final currency = ref.read(currencyProvider);
 
     final entry = TxEntry(
@@ -83,6 +88,8 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     await ref.read(databaseProvider).upsertTransaction(entry);
     HapticFeedback.mediumImpact();
     if (mounted) Navigator.of(context).pop();
+    // Trigger ad after qualifying number of transactions (free users only).
+    AdManager.instance.onTrigger(AdTrigger.afterAddTransaction);
   }
 
   Future<void> _pickDate() async {
@@ -100,6 +107,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final currency = ref.watch(currencyProvider);
+    final userId = ref.watch(currentUserIdProvider);
+    final cats = _isIncome
+        ? ref.watch(incomeCategoriesProvider(userId))
+        : ref.watch(expenseCategoriesProvider(userId));
 
     return Padding(
       padding: EdgeInsets.only(
@@ -186,10 +197,38 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
             height: 88,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: _cats.length,
+              itemCount: cats.length + 1,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
-                final cat = _cats[i];
+                if (i == cats.length) {
+                  return GestureDetector(
+                    onTap: _addCategory,
+                    child: Container(
+                      width: 68,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkCard : AppColors.lightBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.emerald.withOpacity(0.5), width: 2),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_rounded, color: AppColors.emerald, size: 28),
+                          const SizedBox(height: 4),
+                          Text(
+                            'New',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.emerald,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                final cat = cats[i];
                 final selected = cat.id == _selectedCategoryId;
                 return GestureDetector(
                   onTap: () {

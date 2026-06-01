@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/app_database.dart';
+import '../services/premium_service.dart';
 
 // ── Database ─────────────────────────────────────────────────────────────────
 
@@ -80,4 +81,19 @@ final subscriptionsStreamProvider = StreamProvider.family<List<SubEntry>, String
 
 // ── Premium status ────────────────────────────────────────────────────────────
 
-final isPremiumProvider = StateProvider<bool>((ref) => false);
+/// Fetched once at startup; invalidate to re-check after a purchase.
+final premiumStatusProvider = FutureProvider<PremiumStatus>((ref) {
+  return PremiumService.fetchStatus();
+});
+
+final isPremiumProvider = Provider<bool>((ref) {
+  return ref.watch(premiumStatusProvider).valueOrNull?.isPremium ?? false;
+});
+
+final isPlusProvider = Provider<bool>((ref) {
+  return ref.watch(premiumStatusProvider).valueOrNull?.isPlus ?? false;
+});
+
+final planTierProvider = Provider<PlanTier>((ref) {
+  return ref.watch(premiumStatusProvider).valueOrNull?.tier ?? PlanTier.free;
+});

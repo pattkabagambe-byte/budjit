@@ -60,7 +60,22 @@ TxCategory? categoryById(String id, {bool isIncome = false}) {
   }
 }
 
-TxCategory categoryByIdOrDefault(String id, {bool isIncome = false}) {
+TxCategory categoryByIdOrDefault(String id, {bool isIncome = false, List<TxCategory>? custom}) {
+  if (custom != null) {
+    for (final c in custom) {
+      if (c.id == id && c.isIncome == isIncome) return c;
+    }
+  }
   return categoryById(id, isIncome: isIncome) ??
       (isIncome ? kIncomeCategories.last : kExpenseCategories.last);
+}
+
+List<TxCategory> allExpenseCategories({List<TxCategory>? custom}) {
+  final extras = custom?.where((c) => !c.isIncome).toList() ?? const [];
+  return [...kExpenseCategories, ...extras];
+}
+
+List<TxCategory> allIncomeCategories({List<TxCategory>? custom}) {
+  final extras = custom?.where((c) => c.isIncome).toList() ?? const [];
+  return [...kIncomeCategories, ...extras];
 }

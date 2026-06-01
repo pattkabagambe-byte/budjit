@@ -3,11 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ads/ad_manager.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/providers/category_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/services/premium_service.dart';
+import '../../../../core/widgets/premium_gate.dart';
 import '../../../../core/widgets/shared_widgets.dart';
+import '../../../premium/presentation/screens/premium_screen.dart';
+import '../../../export/analytics_export_service.dart';
 import '../../../transactions/domain/category_data.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
@@ -19,12 +25,28 @@ class AnalyticsScreen extends ConsumerWidget {
     final month = ref.watch(selectedMonthProvider);
     final currency = ref.watch(currencyProvider);
     final txAsync = ref.watch(transactionsStreamProvider((userId: userId, month: month)));
+    final customCategories = ref.watch(customTxCategoriesProvider(userId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPlus = ref.watch(isPlusProvider);
+
+    // Fire an ad trigger when the user opens analytics (free users only).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AdManager.instance.onTrigger(AdTrigger.afterViewAnalytics);
+    });
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analytics'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share_rounded),
+            tooltip: isPlus ? 'Export report' : 'Export (Plus feature)',
+            onPressed: isPlus
+                ? () => _showExportSheet(context, ref, userId, month, currency, customCategories)
+                : () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                    ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Row(
@@ -103,22 +125,119 @@ class AnalyticsScreen extends ConsumerWidget {
                 total: expenses,
                 currency: currency,
                 isDark: isDark,
+                customCategories: customCategories,
               ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
 
               const SizedBox(height: 16),
 
-              // Top spending categories (pie)
+              // Spending distribution pie — Plus feature
               if (sorted.isNotEmpty)
-                _SpendingPieCard(
-                  sorted: sorted.take(6).toList(),
-                  total: expenses,
-                  isDark: isDark,
+                PremiumGate(
+                  requiredTier: PlanTier.plus,
+                  featureName: 'Spending Distribution',
+                  featureDescription: 'See how your money splits across categories.',
+                  child: _SpendingPieCard(
+                    sorted: sorted.take(6).toList(),
+                    total: expenses,
+                    isDark: isDark,
+                    customCategories: customCategories,
+                  ),
                 ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+
+              const SizedBox(height: 16),
+
+              // Export banner — Plus feature
+              if (!isPlus)
+                PremiumLockBanner(
+                  requiredTier: PlanTier.plus,
+                  featureName: 'Export reports (CSV / PDF)',
+                ),
             ],
           );
         },
       ),
     );
+  }
+
+  void _showExportSheet(
+    BuildContext context,
+    WidgetRef ref,
+    String userId,
+    DateTime month,
+    String currency,
+    List<TxCategory> customCategories,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Export ${Fmt.monthShort(month)} Report',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.table_chart_outlined, color: AppColors.emerald),
+              title: const Text('Export as Excel'),
+              subtitle: const Text('Spreadsheet with summary and transactions'),
+              onTap: () async {
+                Navigator.pop(context);
+                await _export(context, ref, userId, month, currency, customCategories, asPdf: false);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.rose),
+              title: const Text('Export as PDF'),
+              subtitle: const Text('Monthly analytics report'),
+              onTap: () async {
+                Navigator.pop(context);
+                await _export(context, ref, userId, month, currency, customCategories, asPdf: true);
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _export(
+    BuildContext context,
+    WidgetRef ref,
+    String userId,
+    DateTime month,
+    String currency,
+    List<TxCategory> customCategories, {
+    required bool asPdf,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(content: Text(asPdf ? 'Generating PDF…' : 'Generating Excel…')),
+    );
+    try {
+      final txs = await ref.read(databaseProvider).getTransactions(userId, month: month);
+      final income = txs.where((t) => t.isIncome).fold(0.0, (a, t) => a + t.amount);
+      final expenses = txs.where((t) => !t.isIncome).fold(0.0, (a, t) => a + t.amount);
+      final report = AnalyticsReport(
+        month: month,
+        currency: currency,
+        income: income,
+        expenses: expenses,
+        transactions: txs,
+        customCategories: customCategories,
+      );
+      if (asPdf) {
+        await AnalyticsExportService.exportPdf(report);
+      } else {
+        await AnalyticsExportService.exportExcel(report);
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
   }
 
   List<({DateTime date, double income, double expense})> _buildDailyData(
@@ -307,8 +426,15 @@ class _CategoryBreakdownCard extends StatelessWidget {
   final double total;
   final String currency;
   final bool isDark;
+  final List<TxCategory> customCategories;
 
-  const _CategoryBreakdownCard({required this.sorted, required this.total, required this.currency, required this.isDark});
+  const _CategoryBreakdownCard({
+    required this.sorted,
+    required this.total,
+    required this.currency,
+    required this.isDark,
+    required this.customCategories,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -317,7 +443,7 @@ class _CategoryBreakdownCard extends StatelessWidget {
       isDark: isDark,
       child: Column(
         children: sorted.take(8).map((e) {
-          final cat = categoryByIdOrDefault(e.key);
+          final cat = categoryByIdOrDefault(e.key, custom: customCategories);
           final ratio = total > 0 ? e.value / total : 0.0;
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
@@ -362,8 +488,14 @@ class _SpendingPieCard extends StatefulWidget {
   final List<MapEntry<String, double>> sorted;
   final double total;
   final bool isDark;
+  final List<TxCategory> customCategories;
 
-  const _SpendingPieCard({required this.sorted, required this.total, required this.isDark});
+  const _SpendingPieCard({
+    required this.sorted,
+    required this.total,
+    required this.isDark,
+    required this.customCategories,
+  });
 
   @override
   State<_SpendingPieCard> createState() => _SpendingPieCardState();
@@ -395,7 +527,7 @@ class _SpendingPieCardState extends State<_SpendingPieCard> {
                   sectionsSpace: 3,
                   centerSpaceRadius: 42,
                   sections: widget.sorted.asMap().entries.map((e) {
-                    final cat = categoryByIdOrDefault(e.value.key);
+                    final cat = categoryByIdOrDefault(e.value.key, custom: widget.customCategories);
                     final pct = widget.total > 0 ? e.value.value / widget.total * 100 : 0;
                     final isTouched = _touched == e.key;
                     return PieChartSectionData(
@@ -419,7 +551,7 @@ class _SpendingPieCardState extends State<_SpendingPieCard> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: widget.sorted.take(6).map((e) {
-                  final cat = categoryByIdOrDefault(e.key);
+                  final cat = categoryByIdOrDefault(e.key, custom: widget.customCategories);
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 3),
                     child: Row(

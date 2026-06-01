@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/providers/category_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/shared_widgets.dart';
+import '../../../categories/presentation/widgets/add_category_sheet.dart';
 import '../../../transactions/domain/category_data.dart';
 import '../../../transactions/presentation/widgets/add_transaction_sheet.dart';
 
@@ -22,6 +24,7 @@ class BudgetsScreen extends ConsumerWidget {
     final currency = ref.watch(currencyProvider);
     final budgetsAsync = ref.watch(budgetsStreamProvider(userId));
     final txAsync = ref.watch(transactionsStreamProvider((userId: userId, month: month)));
+    final customCategories = ref.watch(customTxCategoriesProvider(userId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -90,6 +93,7 @@ class BudgetsScreen extends ConsumerWidget {
                         spent: spent,
                         currency: currency,
                         isDark: isDark,
+                        customCategories: customCategories,
                         onDelete: () => _deleteBudget(ref, b.id),
                         onEdit: () => _showEditBudgetSheet(context, ref, b, currency),
                       ).animate().fadeIn(duration: 300.ms, delay: (e.key * 50).ms),
@@ -235,6 +239,7 @@ class _BudgetCard extends StatelessWidget {
   final double spent;
   final String currency;
   final bool isDark;
+  final List<TxCategory> customCategories;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
@@ -243,13 +248,14 @@ class _BudgetCard extends StatelessWidget {
     required this.spent,
     required this.currency,
     required this.isDark,
+    required this.customCategories,
     required this.onDelete,
     required this.onEdit,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cat = categoryByIdOrDefault(budget.category);
+    final cat = categoryByIdOrDefault(budget.category, custom: customCategories);
     final ratio = budget.limitAmount > 0 ? (spent / budget.limitAmount).clamp(0.0, 1.0) : 0.0;
     final color = ratio > 0.9 ? AppColors.rose : ratio > 0.7 ? AppColors.amber : AppColors.emerald;
     final remaining = budget.limitAmount - spent;
@@ -412,6 +418,12 @@ class _BudgetSheetState extends State<_BudgetSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cats = widget.ref.watch(expenseCategoriesProvider(widget.userId));
+
+    Future<void> addCategory() async {
+      final id = await showAddCategorySheet(context);
+      if (id != null && mounted) setState(() => _selectedCategory = id);
+    }
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -475,10 +487,34 @@ class _BudgetSheetState extends State<_BudgetSheet> {
             height: 88,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: kExpenseCategories.length,
+              itemCount: cats.length + 1,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
-                final cat = kExpenseCategories[i];
+                if (i == cats.length) {
+                  return GestureDetector(
+                    onTap: addCategory,
+                    child: Container(
+                      width: 68,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkCard : AppColors.lightBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.emerald.withOpacity(0.5), width: 2),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_rounded, color: AppColors.emerald, size: 28),
+                          const SizedBox(height: 4),
+                          Text(
+                            'New',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.emerald),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                final cat = cats[i];
                 final selected = cat.id == _selectedCategory;
                 return GestureDetector(
                   onTap: () {

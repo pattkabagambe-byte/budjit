@@ -8,8 +8,10 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/ads/ad_manager.dart';
 import 'core/navigation/app_shell.dart';
 import 'core/providers/core_providers.dart';
+import 'core/services/premium_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/auth_screen.dart';
 import 'features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -30,8 +32,15 @@ void main() async {
     startupError = error;
   }
 
+  // Check premium status before initializing ads.
+  PremiumStatus premiumStatus = const PremiumStatus(tier: PlanTier.free);
+  try {
+    premiumStatus = await PremiumService.fetchStatus();
+  } catch (_) {}
+
   try {
     await MobileAds.instance.initialize();
+    await AdManager.instance.init(isPremium: premiumStatus.isPremium);
   } catch (_) {}
 
   const purchasesApiKey = 'REVENUECAT_BUDJIT_KEY';

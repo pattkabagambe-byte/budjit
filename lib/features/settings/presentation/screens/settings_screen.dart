@@ -5,13 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/providers/category_providers.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/services/premium_service.dart';
 import '../../../../core/review/review_service.dart';
 import '../../../../core/support/support_sheet.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/shared_widgets.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
+import '../../../categories/presentation/screens/categories_screen.dart';
+import '../../../export/analytics_export_service.dart';
 import '../../../premium/presentation/screens/premium_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -21,6 +25,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = FirebaseAuth.instance.currentUser;
     final isPremium = ref.watch(isPremiumProvider);
+    final planTier = ref.watch(planTierProvider);
     final currency = ref.watch(currencyProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -43,15 +48,15 @@ class SettingsScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Column(
                 children: [
-                  // Premium banner
-                  if (!isPremium)
-                    _PremiumBanner(
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const PremiumScreen(),
-                      )),
+                  // Current plan card — always visible
+                  _CurrentPlanCard(
+                    tier: planTier,
+                    onUpgrade: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PremiumScreen()),
                     ),
+                  ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // Account section
                   _SettingsSection(
@@ -143,11 +148,20 @@ class SettingsScreen extends ConsumerWidget {
                         trailing: const Icon(Icons.check_circle_rounded, color: AppColors.emerald, size: 18),
                       ),
                       InfoTile(
+                        icon: Icons.category_outlined,
+                        title: 'Manage Categories',
+                        subtitle: 'Add custom categories with emoji',
+                        iconColor: AppColors.violet,
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const CategoriesScreen(),
+                        )),
+                      ),
+                      InfoTile(
                         icon: Icons.file_download_outlined,
                         title: 'Export Data',
-                        subtitle: 'Download as CSV or PDF',
+                        subtitle: 'Download as Excel or PDF',
                         iconColor: AppColors.teal,
-                        onTap: () => _showExportSheet(context),
+                        onTap: () => _showExportSheet(context, ref),
                       ),
                     ],
                   ),
@@ -246,7 +260,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showExportSheet(BuildContext context) {
+  void _showExportSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       builder: (_) => SafeArea(
@@ -259,24 +273,20 @@ class SettingsScreen extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.table_chart_outlined, color: AppColors.emerald),
-              title: const Text('Export as CSV'),
+              title: const Text('Export as Excel'),
               subtitle: const Text('Open in Excel or Sheets'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('CSV export — upgrade to Premium')),
-                );
+                await _exportAllData(context, ref, asPdf: false);
               },
             ),
             ListTile(
               leading: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.rose),
               title: const Text('Export as PDF'),
-              subtitle: const Text('Monthly report'),
-              onTap: () {
+              subtitle: const Text('Monthly analytics report'),
+              onTap: () async {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('PDF export — upgrade to Premium')),
-                );
+                await _exportAllData(context, ref, asPdf: true);
               },
             ),
             const SizedBox(height: 20),
@@ -284,6 +294,37 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _exportAllData(BuildContext context, WidgetRef ref, {required bool asPdf}) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(content: Text(asPdf ? 'Generating PDF…' : 'Generating Excel…')),
+    );
+    try {
+      final userId = ref.read(currentUserIdProvider);
+      final month = ref.read(selectedMonthProvider);
+      final currency = ref.read(currencyProvider);
+      final customCategories = ref.read(customTxCategoriesProvider(userId));
+      final txs = await ref.read(databaseProvider).getTransactions(userId, month: month);
+      final income = txs.where((t) => t.isIncome).fold(0.0, (a, t) => a + t.amount);
+      final expenses = txs.where((t) => !t.isIncome).fold(0.0, (a, t) => a + t.amount);
+      final report = AnalyticsReport(
+        month: month,
+        currency: currency,
+        income: income,
+        expenses: expenses,
+        transactions: txs,
+        customCategories: customCategories,
+      );
+      if (asPdf) {
+        await AnalyticsExportService.exportPdf(report);
+      } else {
+        await AnalyticsExportService.exportExcel(report);
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
   }
 }
 
@@ -369,40 +410,140 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-class _PremiumBanner extends StatelessWidget {
-  final VoidCallback onTap;
-  const _PremiumBanner({required this.onTap});
+class _CurrentPlanCard extends StatelessWidget {
+  final PlanTier tier;
+  final VoidCallback onUpgrade;
+
+  const _CurrentPlanCard({required this.tier, required this.onUpgrade});
+
+  @override
+  Widget build(BuildContext context) {
+    if (tier == PlanTier.free) return _FreePlanCard(onUpgrade: onUpgrade);
+    if (tier == PlanTier.plus) return _PaidPlanCard(tier: tier, onUpgrade: onUpgrade, label: 'Plus');
+    return _PaidPlanCard(tier: tier, onUpgrade: onUpgrade, label: 'Premium');
+  }
+}
+
+class _FreePlanCard extends StatelessWidget {
+  final VoidCallback onUpgrade;
+  const _FreePlanCard({required this.onUpgrade});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: onUpgrade,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           gradient: AppColors.gradientViolet,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 28),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Upgrade to Premium', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
-                  Text('AI coach, deep analytics, no ads', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                ],
-              ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'FREE PLAN',
+                    style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1),
+                  ),
+                ),
+                const Spacer(),
+                const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 22),
+              ],
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
-              child: const Text('Upgrade', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+            const SizedBox(height: 10),
+            const Text(
+              'Unlock the full Budjit experience',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'AI coach · Deep analytics · No ads · Export · Sync',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'See plans & pricing →',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.violet,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PaidPlanCard extends StatelessWidget {
+  final PlanTier tier;
+  final VoidCallback onUpgrade;
+  final String label;
+
+  const _PaidPlanCard({required this.tier, required this.onUpgrade, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = tier == PlanTier.premium ? AppColors.violet : AppColors.sky;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.auto_awesome_rounded, color: color, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Budjit $label',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: color),
+                ),
+                const Text(
+                  'You have full access — enjoy!',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle_rounded, color: AppColors.emerald, size: 22),
+        ],
       ),
     );
   }

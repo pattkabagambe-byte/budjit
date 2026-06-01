@@ -1813,6 +1813,388 @@ class SubscriptionEntriesCompanion extends UpdateCompanion<SubEntry> {
   }
 }
 
+class $CustomCategoriesTable extends CustomCategories
+    with TableInfo<$CustomCategoriesTable, CustomCategoryEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CustomCategoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+      'user_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+      'label', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _emojiMeta = const VerificationMeta('emoji');
+  @override
+  late final GeneratedColumn<String> emoji = GeneratedColumn<String>(
+      'emoji', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('📦'));
+  static const VerificationMeta _colorHexMeta =
+      const VerificationMeta('colorHex');
+  @override
+  late final GeneratedColumn<String> colorHex = GeneratedColumn<String>(
+      'color_hex', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('#6366F1'));
+  static const VerificationMeta _isIncomeMeta =
+      const VerificationMeta('isIncome');
+  @override
+  late final GeneratedColumn<bool> isIncome = GeneratedColumn<bool>(
+      'is_income', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_income" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, userId, label, emoji, colorHex, isIncome, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'custom_categories';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CustomCategoryEntry> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+          _labelMeta, label.isAcceptableOrUnknown(data['label']!, _labelMeta));
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('emoji')) {
+      context.handle(
+          _emojiMeta, emoji.isAcceptableOrUnknown(data['emoji']!, _emojiMeta));
+    }
+    if (data.containsKey('color_hex')) {
+      context.handle(_colorHexMeta,
+          colorHex.isAcceptableOrUnknown(data['color_hex']!, _colorHexMeta));
+    }
+    if (data.containsKey('is_income')) {
+      context.handle(_isIncomeMeta,
+          isIncome.isAcceptableOrUnknown(data['is_income']!, _isIncomeMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CustomCategoryEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CustomCategoryEntry(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+      label: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label'])!,
+      emoji: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}emoji'])!,
+      colorHex: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}color_hex'])!,
+      isIncome: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_income'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $CustomCategoriesTable createAlias(String alias) {
+    return $CustomCategoriesTable(attachedDatabase, alias);
+  }
+}
+
+class CustomCategoryEntry extends DataClass
+    implements Insertable<CustomCategoryEntry> {
+  final String id;
+  final String userId;
+  final String label;
+  final String emoji;
+  final String colorHex;
+  final bool isIncome;
+  final DateTime createdAt;
+  const CustomCategoryEntry(
+      {required this.id,
+      required this.userId,
+      required this.label,
+      required this.emoji,
+      required this.colorHex,
+      required this.isIncome,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['label'] = Variable<String>(label);
+    map['emoji'] = Variable<String>(emoji);
+    map['color_hex'] = Variable<String>(colorHex);
+    map['is_income'] = Variable<bool>(isIncome);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  CustomCategoriesCompanion toCompanion(bool nullToAbsent) {
+    return CustomCategoriesCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      label: Value(label),
+      emoji: Value(emoji),
+      colorHex: Value(colorHex),
+      isIncome: Value(isIncome),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CustomCategoryEntry.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CustomCategoryEntry(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      label: serializer.fromJson<String>(json['label']),
+      emoji: serializer.fromJson<String>(json['emoji']),
+      colorHex: serializer.fromJson<String>(json['colorHex']),
+      isIncome: serializer.fromJson<bool>(json['isIncome']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'label': serializer.toJson<String>(label),
+      'emoji': serializer.toJson<String>(emoji),
+      'colorHex': serializer.toJson<String>(colorHex),
+      'isIncome': serializer.toJson<bool>(isIncome),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  CustomCategoryEntry copyWith(
+          {String? id,
+          String? userId,
+          String? label,
+          String? emoji,
+          String? colorHex,
+          bool? isIncome,
+          DateTime? createdAt}) =>
+      CustomCategoryEntry(
+        id: id ?? this.id,
+        userId: userId ?? this.userId,
+        label: label ?? this.label,
+        emoji: emoji ?? this.emoji,
+        colorHex: colorHex ?? this.colorHex,
+        isIncome: isIncome ?? this.isIncome,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  CustomCategoryEntry copyWithCompanion(CustomCategoriesCompanion data) {
+    return CustomCategoryEntry(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      label: data.label.present ? data.label.value : this.label,
+      emoji: data.emoji.present ? data.emoji.value : this.emoji,
+      colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
+      isIncome: data.isIncome.present ? data.isIncome.value : this.isIncome,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomCategoryEntry(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('label: $label, ')
+          ..write('emoji: $emoji, ')
+          ..write('colorHex: $colorHex, ')
+          ..write('isIncome: $isIncome, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, userId, label, emoji, colorHex, isIncome, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CustomCategoryEntry &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.label == this.label &&
+          other.emoji == this.emoji &&
+          other.colorHex == this.colorHex &&
+          other.isIncome == this.isIncome &&
+          other.createdAt == this.createdAt);
+}
+
+class CustomCategoriesCompanion extends UpdateCompanion<CustomCategoryEntry> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> label;
+  final Value<String> emoji;
+  final Value<String> colorHex;
+  final Value<bool> isIncome;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const CustomCategoriesCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.label = const Value.absent(),
+    this.emoji = const Value.absent(),
+    this.colorHex = const Value.absent(),
+    this.isIncome = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CustomCategoriesCompanion.insert({
+    required String id,
+    required String userId,
+    required String label,
+    this.emoji = const Value.absent(),
+    this.colorHex = const Value.absent(),
+    this.isIncome = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        userId = Value(userId),
+        label = Value(label),
+        createdAt = Value(createdAt);
+  static Insertable<CustomCategoryEntry> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? label,
+    Expression<String>? emoji,
+    Expression<String>? colorHex,
+    Expression<bool>? isIncome,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (label != null) 'label': label,
+      if (emoji != null) 'emoji': emoji,
+      if (colorHex != null) 'color_hex': colorHex,
+      if (isIncome != null) 'is_income': isIncome,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CustomCategoriesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? userId,
+      Value<String>? label,
+      Value<String>? emoji,
+      Value<String>? colorHex,
+      Value<bool>? isIncome,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
+    return CustomCategoriesCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      label: label ?? this.label,
+      emoji: emoji ?? this.emoji,
+      colorHex: colorHex ?? this.colorHex,
+      isIncome: isIncome ?? this.isIncome,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (emoji.present) {
+      map['emoji'] = Variable<String>(emoji.value);
+    }
+    if (colorHex.present) {
+      map['color_hex'] = Variable<String>(colorHex.value);
+    }
+    if (isIncome.present) {
+      map['is_income'] = Variable<bool>(isIncome.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomCategoriesCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('label: $label, ')
+          ..write('emoji: $emoji, ')
+          ..write('colorHex: $colorHex, ')
+          ..write('isIncome: $isIncome, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1821,12 +2203,19 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SavingsGoalsTable savingsGoals = $SavingsGoalsTable(this);
   late final $SubscriptionEntriesTable subscriptionEntries =
       $SubscriptionEntriesTable(this);
+  late final $CustomCategoriesTable customCategories =
+      $CustomCategoriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [transactions, budgets, savingsGoals, subscriptionEntries];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        transactions,
+        budgets,
+        savingsGoals,
+        subscriptionEntries,
+        customCategories
+      ];
 }
 
 typedef $$TransactionsTableCreateCompanionBuilder = TransactionsCompanion
@@ -2731,6 +3120,210 @@ typedef $$SubscriptionEntriesTableProcessedTableManager = ProcessedTableManager<
     ),
     SubEntry,
     PrefetchHooks Function()>;
+typedef $$CustomCategoriesTableCreateCompanionBuilder
+    = CustomCategoriesCompanion Function({
+  required String id,
+  required String userId,
+  required String label,
+  Value<String> emoji,
+  Value<String> colorHex,
+  Value<bool> isIncome,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$CustomCategoriesTableUpdateCompanionBuilder
+    = CustomCategoriesCompanion Function({
+  Value<String> id,
+  Value<String> userId,
+  Value<String> label,
+  Value<String> emoji,
+  Value<String> colorHex,
+  Value<bool> isIncome,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+class $$CustomCategoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $CustomCategoriesTable> {
+  $$CustomCategoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get emoji => $composableBuilder(
+      column: $table.emoji, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get colorHex => $composableBuilder(
+      column: $table.colorHex, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isIncome => $composableBuilder(
+      column: $table.isIncome, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CustomCategoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CustomCategoriesTable> {
+  $$CustomCategoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get emoji => $composableBuilder(
+      column: $table.emoji, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get colorHex => $composableBuilder(
+      column: $table.colorHex, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isIncome => $composableBuilder(
+      column: $table.isIncome, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CustomCategoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CustomCategoriesTable> {
+  $$CustomCategoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get emoji =>
+      $composableBuilder(column: $table.emoji, builder: (column) => column);
+
+  GeneratedColumn<String> get colorHex =>
+      $composableBuilder(column: $table.colorHex, builder: (column) => column);
+
+  GeneratedColumn<bool> get isIncome =>
+      $composableBuilder(column: $table.isIncome, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$CustomCategoriesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CustomCategoriesTable,
+    CustomCategoryEntry,
+    $$CustomCategoriesTableFilterComposer,
+    $$CustomCategoriesTableOrderingComposer,
+    $$CustomCategoriesTableAnnotationComposer,
+    $$CustomCategoriesTableCreateCompanionBuilder,
+    $$CustomCategoriesTableUpdateCompanionBuilder,
+    (
+      CustomCategoryEntry,
+      BaseReferences<_$AppDatabase, $CustomCategoriesTable, CustomCategoryEntry>
+    ),
+    CustomCategoryEntry,
+    PrefetchHooks Function()> {
+  $$CustomCategoriesTableTableManager(
+      _$AppDatabase db, $CustomCategoriesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CustomCategoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CustomCategoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CustomCategoriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> userId = const Value.absent(),
+            Value<String> label = const Value.absent(),
+            Value<String> emoji = const Value.absent(),
+            Value<String> colorHex = const Value.absent(),
+            Value<bool> isIncome = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CustomCategoriesCompanion(
+            id: id,
+            userId: userId,
+            label: label,
+            emoji: emoji,
+            colorHex: colorHex,
+            isIncome: isIncome,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String userId,
+            required String label,
+            Value<String> emoji = const Value.absent(),
+            Value<String> colorHex = const Value.absent(),
+            Value<bool> isIncome = const Value.absent(),
+            required DateTime createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CustomCategoriesCompanion.insert(
+            id: id,
+            userId: userId,
+            label: label,
+            emoji: emoji,
+            colorHex: colorHex,
+            isIncome: isIncome,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CustomCategoriesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CustomCategoriesTable,
+    CustomCategoryEntry,
+    $$CustomCategoriesTableFilterComposer,
+    $$CustomCategoriesTableOrderingComposer,
+    $$CustomCategoriesTableAnnotationComposer,
+    $$CustomCategoriesTableCreateCompanionBuilder,
+    $$CustomCategoriesTableUpdateCompanionBuilder,
+    (
+      CustomCategoryEntry,
+      BaseReferences<_$AppDatabase, $CustomCategoriesTable, CustomCategoryEntry>
+    ),
+    CustomCategoryEntry,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2743,4 +3336,6 @@ class $AppDatabaseManager {
       $$SavingsGoalsTableTableManager(_db, _db.savingsGoals);
   $$SubscriptionEntriesTableTableManager get subscriptionEntries =>
       $$SubscriptionEntriesTableTableManager(_db, _db.subscriptionEntries);
+  $$CustomCategoriesTableTableManager get customCategories =>
+      $$CustomCategoriesTableTableManager(_db, _db.customCategories);
 }

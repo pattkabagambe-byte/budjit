@@ -55,6 +55,20 @@ class SavingsGoals extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+@DataClassName('CustomCategoryEntry')
+class CustomCategories extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get label => text()();
+  TextColumn get emoji => text().withDefault(const Constant('📦'))();
+  TextColumn get colorHex => text().withDefault(const Constant('#6366F1'))();
+  BoolColumn get isIncome => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DataClassName('SubEntry')
 class SubscriptionEntries extends Table {
   TextColumn get id => text()();
@@ -73,12 +87,22 @@ class SubscriptionEntries extends Table {
 
 // ── Database ────────────────────────────────────────────────────────────────
 
-@DriftDatabase(tables: [Transactions, Budgets, SavingsGoals, SubscriptionEntries])
+@DriftDatabase(tables: [Transactions, Budgets, SavingsGoals, SubscriptionEntries, CustomCategories])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(customCategories);
+          }
+        },
+      );
 
   // ── Transactions ────────────────────────────────────────────────────────
 
@@ -173,6 +197,20 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteSubscription(String id) =>
       (delete(subscriptionEntries)..where((s) => s.id.equals(id))).go();
+
+  // ── Custom Categories ─────────────────────────────────────────────────────
+
+  Stream<List<CustomCategoryEntry>> watchCustomCategories(String userId) =>
+      (select(customCategories)
+            ..where((c) => c.userId.equals(userId))
+            ..orderBy([(c) => OrderingTerm(expression: c.createdAt)]))
+          .watch();
+
+  Future<void> upsertCustomCategory(CustomCategoryEntry entry) =>
+      into(customCategories).insertOnConflictUpdate(entry);
+
+  Future<void> deleteCustomCategory(String id) =>
+      (delete(customCategories)..where((c) => c.id.equals(id))).go();
 }
 
 LazyDatabase _openConnection() {
