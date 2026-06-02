@@ -74,23 +74,31 @@ class _TabbedBudgetPlannerViewState
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.more_horiz_rounded, color: _primary),
-            tooltip: 'Budget Planner menu',
-            onPressed: () => PlannerMenuSheet.show(
-              context,
-              currentMode: LayoutMode.tabbedMode,
-              onOpenSettings: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          Tooltip(
+            message: 'Budget Planner menu',
+            child: Semantics(
+              button: true,
+              label: 'Open Budget Planner menu',
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => PlannerMenuSheet.show(
+                  context,
+                  currentMode: LayoutMode.tabbedMode,
+                  onOpenSettings: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  ),
+                  onExportReport: () => _tabCtrl.animateTo(2),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: UserAvatar(
+                    photoUrl: user?.photoURL,
+                    displayName: displayName,
+                    radius: 17,
+                  ),
+                ),
               ),
-              onExportReport: () => _tabCtrl.animateTo(2),
             ),
-          ),
-          const SizedBox(width: 4),
-          UserAvatar(
-            photoUrl: user?.photoURL,
-            displayName: displayName,
-            radius: 16,
           ),
           const SizedBox(width: 12),
         ],
