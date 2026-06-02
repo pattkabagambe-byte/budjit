@@ -63,7 +63,7 @@ class AnalyticsExportService {
           pw.Header(
             level: 0,
             child: pw.Text(
-              'Budjit Analytics Report',
+              'Cashflo Analytics Report',
               style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
             ),
           ),
@@ -122,10 +122,10 @@ class AnalyticsExportService {
 
     final bytes = await doc.save();
     final dir = await getTemporaryDirectory();
-    final fileName = 'budjit_report_${DateFormat('yyyy_MM').format(report.month)}.pdf';
+    final fileName = 'cashflo_report_${DateFormat('yyyy_MM').format(report.month)}.pdf';
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)], text: 'Budjit report for $monthLabel');
+    await Share.shareXFiles([XFile(file.path)], text: 'Cashflo report for $monthLabel');
   }
 
   static pw.Widget _pdfStat(String label, String value) {
@@ -145,7 +145,7 @@ class AnalyticsExportService {
     excel.delete('Sheet1');
 
     final monthLabel = Fmt.month(report.month);
-    summary.appendRow([TextCellValue('Budjit Analytics Report')]);
+    summary.appendRow([TextCellValue('Cashflo Analytics Report')]);
     summary.appendRow([TextCellValue(monthLabel)]);
     summary.appendRow([]);
     summary.appendRow([
@@ -205,9 +205,9 @@ class AnalyticsExportService {
     if (bytes == null) throw Exception('Failed to generate Excel file');
 
     final dir = await getTemporaryDirectory();
-    final fileName = 'budjit_report_${DateFormat('yyyy_MM').format(report.month)}.xlsx';
+    final fileName = 'cashflo_report_${DateFormat('yyyy_MM').format(report.month)}.xlsx';
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)], text: 'Budjit report for $monthLabel');
+    await Share.shareXFiles([XFile(file.path)], text: 'Cashflo report for $monthLabel');
   }
 }

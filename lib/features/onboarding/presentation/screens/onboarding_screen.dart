@@ -225,7 +225,7 @@ class _WelcomePage extends StatelessWidget {
           ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
           const SizedBox(height: 32),
           Text(
-            'Welcome to Budjit',
+            'Welcome to Cashflo',
             style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w900,

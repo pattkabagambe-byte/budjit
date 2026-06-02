@@ -378,10 +378,10 @@ class SettingsScreen extends ConsumerWidget {
                       InfoTile(
                         icon: Icons.privacy_tip_outlined,
                         title: 'Privacy Policy',
-                        subtitle: 'How Budjit protects your data',
+                        subtitle: 'How Cashflo protects your data',
                         iconColor: AppColors.violet,
                         onTap: () =>
-                            launchUrl(Uri.parse('https://budjit.app/privacy')),
+                            launchUrl(Uri.parse('https://cashflo.app/privacy')),
                       ),
                       InfoTile(
                         icon: Icons.lock_outline_rounded,
@@ -402,7 +402,7 @@ class SettingsScreen extends ConsumerWidget {
                     items: [
                       InfoTile(
                         icon: Icons.star_rate_rounded,
-                        title: 'Rate Budjit',
+                        title: 'Rate Cashflo',
                         subtitle: 'Share your experience on the store',
                         iconColor: AppColors.amber,
                         onTap: () => ReviewService.instance
@@ -410,7 +410,7 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       InfoTile(
                         icon: Icons.ios_share_rounded,
-                        title: 'Share Budjit',
+                        title: 'Share Cashflo',
                         subtitle: 'Invite friends to try the app',
                         iconColor: AppColors.emerald,
                         onTap: () => AppShareService.shareApp(),
@@ -421,7 +421,7 @@ class SettingsScreen extends ConsumerWidget {
                         subtitle: 'Email or WhatsApp — contact details stay private',
                         iconColor: AppColors.sky,
                         onTap: () =>
-                            SupportSheet.show(context, appName: 'Budjit'),
+                            SupportSheet.show(context, appName: 'Cashflo'),
                       ),
                     ],
                   ),
@@ -442,7 +442,7 @@ class SettingsScreen extends ConsumerWidget {
                   FutureBuilder<PackageInfo>(
                     future: PackageInfo.fromPlatform(),
                     builder: (_, snap) => Text(
-                      snap.hasData ? 'Budjit v${snap.data!.version}' : 'Budjit',
+                      snap.hasData ? 'Cashflo v${snap.data!.version}' : 'Cashflo',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ),
@@ -855,7 +855,7 @@ class _FreePlanCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Unlock the full Budjit experience',
+              'Unlock the full Cashflo experience',
               style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -931,7 +931,7 @@ class _PaidPlanCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Budjit $label',
+                  'Cashflo $label',
                   style: TextStyle(
                       fontWeight: FontWeight.w800, fontSize: 15, color: color),
                 ),

@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:share_plus/share_plus.dart';
 
-/// Share Budjit with friends — no personal contact details in the message.
+/// Share Cashflo with friends — no personal contact details in the message.
 abstract final class AppShareService {
   static const String _playStoreUrl =
       'https://play.google.com/store/apps/details?id=app.budjit.budjit';
-  static const String _webUrl = 'https://budjit.app';
+  static const String _webUrl = 'https://cashflo.app';
 
   static Future<void> shareApp() async {
     final storeLine = Platform.isIOS
@@ -15,9 +15,9 @@ abstract final class AppShareService {
 
     await SharePlus.instance.share(
       ShareParams(
-        text: 'Check out Budjit — your personal budget planner and tracker.\n\n'
+        text: 'Check out Cashflo — your personal budget planner and tracker.\n\n'
             '$storeLine',
-        subject: 'Try Budjit',
+        subject: 'Try Cashflo',
       ),
     );
   }

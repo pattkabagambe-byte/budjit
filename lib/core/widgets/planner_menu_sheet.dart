@@ -92,7 +92,7 @@ class _PlannerMenuContent extends ConsumerWidget {
             ),
             _ActionTile(
               icon: Icons.share_rounded,
-              title: 'Share Budjit',
+              title: 'Share Cashflo',
               subtitle: 'Tell friends about the app',
               onTap: () {
                 Navigator.pop(context);
@@ -120,7 +120,7 @@ class _PlannerMenuContent extends ConsumerWidget {
               subtitle: 'Get support and answers',
               onTap: () {
                 Navigator.pop(context);
-                SupportSheet.show(context, appName: 'Budjit');
+                SupportSheet.show(context, appName: 'Cashflo');
               },
             ),
           ],

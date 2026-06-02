@@ -138,7 +138,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                           .scale(curve: Curves.elasticOut, duration: 600.ms),
                       const SizedBox(height: 12),
                       const Text(
-                        'Budjit Premium',
+                        'Cashflo Premium',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 28,

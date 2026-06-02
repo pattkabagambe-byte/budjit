@@ -53,7 +53,7 @@ void main() async {
     await AdManager.instance.init(isPremium: premiumStatus.isPremium);
   } catch (_) {}
 
-  const purchasesApiKey = 'REVENUECAT_BUDJIT_KEY';
+  const purchasesApiKey = 'REVENUECAT_CASHFLO_KEY';
   if (!purchasesApiKey.startsWith('REVENUECAT_')) {
     try {
       await Purchases.configure(PurchasesConfiguration(purchasesApiKey));
@@ -73,7 +73,7 @@ void main() async {
         currencyProvider.overrideWith((ref) => savedCurrency),
       ],
       child: AdLifecycleHandler(
-        child: BudjitApp(
+        child: CashfloApp(
           firebaseReady: firebaseReady,
           startupError: startupError,
         ),
@@ -82,8 +82,8 @@ void main() async {
   );
 }
 
-class BudjitApp extends ConsumerWidget {
-  const BudjitApp({super.key, required this.firebaseReady, this.startupError});
+class CashfloApp extends ConsumerWidget {
+  const CashfloApp({super.key, required this.firebaseReady, this.startupError});
 
   final bool firebaseReady;
   final Object? startupError;
@@ -92,7 +92,7 @@ class BudjitApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themePreference = ref.watch(appPreferencesProvider).theme;
     return MaterialApp(
-      title: 'Budjit',
+      title: 'Cashflo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
@@ -181,7 +181,7 @@ class _Splash extends StatelessWidget {
             ),
             SizedBox(height: 24),
             Text(
-              'Budjit',
+              'Cashflo',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w900,

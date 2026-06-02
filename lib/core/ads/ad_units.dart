@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// AdMob identifiers for Budjit.
+/// AdMob identifiers for Cashflo.
 abstract final class AdUnits {
   static const String appId = 'ca-app-pub-9402272089735179~8466069560';
 

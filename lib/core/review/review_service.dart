@@ -33,9 +33,9 @@ class ReviewService {
     final rate = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Enjoying Budjit?'),
+        title: const Text('Enjoying Cashflo?'),
         content: const Text(
-          'If Budjit is helping you stay on track, a quick rating '
+          'If Cashflo is helping you stay on track, a quick rating '
           'helps others discover the app. Thank you!',
         ),
         actions: [
@@ -45,7 +45,7 @@ class ReviewService {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Rate Budjit'),
+            child: const Text('Rate Cashflo'),
           ),
         ],
       ),
@@ -58,12 +58,12 @@ class ReviewService {
     }
   }
 
-  /// Settings → Rate Budjit (always available).
+  /// Settings → Rate Cashflo (always available).
   Future<void> requestReviewFromSettings(BuildContext context) async {
     final rate = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rate Budjit'),
+        title: const Text('Rate Cashflo'),
         content: const Text(
           'Your feedback on the App Store or Google Play means a lot to us.',
         ),

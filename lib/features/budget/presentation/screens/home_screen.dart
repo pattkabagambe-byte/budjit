@@ -142,12 +142,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Budjit'),
+        title: const Text('Cashflo'),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline_rounded),
             tooltip: 'Get Help',
-            onPressed: () => SupportSheet.show(context, appName: 'Budjit'),
+            onPressed: () => SupportSheet.show(context, appName: 'Cashflo'),
           ),
           if (_isGuest)
             TextButton(
