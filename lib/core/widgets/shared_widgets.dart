@@ -358,6 +358,7 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -368,7 +369,7 @@ class EmptyState extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.emerald.withOpacity(0.1),
+                color: AppColors.emerald.withOpacity(isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(icon, size: 36, color: AppColors.emerald),
@@ -376,14 +377,16 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               title,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : AppColors.navy),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: isDark ? Colors.white54 : Colors.grey),
               textAlign: TextAlign.center,
             ),
             if (actionLabel != null) ...[

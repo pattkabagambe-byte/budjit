@@ -13,8 +13,10 @@ import '../../../../core/providers/category_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/providers/layout_provider.dart';
 import '../../../../core/services/premium_service.dart';
+import '../../../../core/engagement/app_share_service.dart';
 import '../../../../core/review/review_service.dart';
 import '../../../../core/support/support_sheet.dart';
+import '../../../../core/widgets/made_in_kasese.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/shared_widgets.dart';
@@ -28,7 +30,8 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = ref.watch(currentUserProvider).valueOrNull ??
+        FirebaseAuth.instance.currentUser;
     final isPremium = ref.watch(isPremiumProvider);
     final planTier = ref.watch(planTierProvider);
     final currency = ref.watch(currencyProvider);
@@ -400,13 +403,22 @@ class SettingsScreen extends ConsumerWidget {
                       InfoTile(
                         icon: Icons.star_rate_rounded,
                         title: 'Rate Budjit',
-                        subtitle: 'Leave us a review',
+                        subtitle: 'Share your experience on the store',
                         iconColor: AppColors.amber,
-                        onTap: () => ReviewService.instance.onAppOpened(),
+                        onTap: () => ReviewService.instance
+                            .requestReviewFromSettings(context),
+                      ),
+                      InfoTile(
+                        icon: Icons.ios_share_rounded,
+                        title: 'Share Budjit',
+                        subtitle: 'Invite friends to try the app',
+                        iconColor: AppColors.emerald,
+                        onTap: () => AppShareService.shareApp(),
                       ),
                       InfoTile(
                         icon: Icons.help_outline_rounded,
                         title: 'Help & Support',
+                        subtitle: 'Email or WhatsApp — contact details stay private',
                         iconColor: AppColors.sky,
                         onTap: () =>
                             SupportSheet.show(context, appName: 'Budjit'),
@@ -435,8 +447,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Made with ❤️ for Africa & beyond',
-                      style: TextStyle(color: Colors.grey, fontSize: 11)),
+                  const MadeInKaseseLabel(),
                   const SizedBox(height: 40),
                 ],
               ),

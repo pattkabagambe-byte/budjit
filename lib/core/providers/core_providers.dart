@@ -16,11 +16,12 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 final currentUserProvider = StreamProvider<User?>((ref) {
-  return FirebaseAuth.instance.authStateChanges();
+  return FirebaseAuth.instance.userChanges();
 });
 
 final currentUserIdProvider = Provider<String>((ref) {
-  return FirebaseAuth.instance.currentUser?.uid ?? 'local';
+  final user = ref.watch(currentUserProvider).valueOrNull;
+  return user?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? 'local';
 });
 
 // ── Preferences ──────────────────────────────────────────────────────────────

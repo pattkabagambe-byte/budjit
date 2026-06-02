@@ -19,16 +19,16 @@ class AppColors {
   static const placeholder = Color(0xFFB9A5A9);
 
   // Semantic feedback
-  static const error = Color(0xFFC04D5F);
-  static const success = Color(0xFF527A5D);
+  static const error = Color(0xFFD64D5F);
+  static const success = Color(0xFF2E8B57); // SeaGreen - better visibility
   static const warning = Color(0xFFB68642);
   static const info = Color(0xFF7C5C62);
 
   // Legacy aliases kept while feature screens move onto named tokens.
   static const navy = textPrimary;
   static const navyLight = textSecondary;
-  static const emerald = success;
-  static const emeraldLight = Color(0xFF75A081);
+  static const emerald = Color(0xFF10B981); // Vibrant Emerald
+  static const emeraldLight = Color(0xFF34D399);
   static const amber = warning;
   static const rose = error;
   static const violet = Color(0xFF8A718C);
@@ -46,6 +46,9 @@ class AppColors {
   static const darkBorder = Color(0xFF50383E);
   static const darkText = Color(0xFFFAF4EA);
   static const darkMuted = Color(0xFFD0BBC0);
+
+  static Color primarySelected(bool isDark) =>
+      isDark ? const Color(0xFFFFB3B9) : primary;
 
   // Light surfaces
   static const lightBg = background;
@@ -73,7 +76,7 @@ class AppColors {
   static const catAirtime = Color(0xFFC7A44D);
   static const catFuel = Color(0xFF96735F);
   static const catSchoolFees = Color(0xFF668C87);
-  static const catGroceries = Color(0xFF75906C);
+  static const catGroceries = Color(0xFF6DA368);
 
   // Gradient presets
   static const gradientNavy = LinearGradient(

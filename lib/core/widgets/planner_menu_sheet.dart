@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../engagement/app_share_service.dart';
 import '../models/layout_mode.dart';
 import '../providers/app_preferences_provider.dart';
 import '../providers/layout_provider.dart';
@@ -88,6 +89,15 @@ class _PlannerMenuContent extends ConsumerWidget {
               title: 'Export report',
               subtitle: 'Open reporting and export options',
               onTap: () => _run(context, onExportReport),
+            ),
+            _ActionTile(
+              icon: Icons.share_rounded,
+              title: 'Share Budjit',
+              subtitle: 'Tell friends about the app',
+              onTap: () {
+                Navigator.pop(context);
+                AppShareService.shareApp();
+              },
             ),
             _ActionTile(
               icon: Icons.cloud_upload_outlined,

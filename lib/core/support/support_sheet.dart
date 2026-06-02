@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../widgets/made_in_kasese.dart';
+import 'support_contacts.dart';
+
 class SupportSheet extends StatelessWidget {
   final String appName;
   const SupportSheet({super.key, required this.appName});
@@ -19,7 +22,7 @@ class SupportSheet extends StatelessWidget {
   Future<void> _openEmail(BuildContext context) async {
     final uri = Uri(
       scheme: 'mailto',
-      path: 'motuspotentia@gmail.com',
+      path: SupportContacts.supportEmail,
       queryParameters: {
         'subject': '$appName — Support Request',
       },
@@ -35,7 +38,7 @@ class SupportSheet extends StatelessWidget {
 
   Future<void> _openWhatsApp(BuildContext context) async {
     final uri = Uri.parse(
-      'https://wa.me/256772844881'
+      'https://wa.me/${SupportContacts.whatsAppE164}'
       '?text=${Uri.encodeComponent('Hi, I need help with $appName.')}',
     );
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -50,6 +53,7 @@ class SupportSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.55);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
@@ -59,7 +63,8 @@ class SupportSheet extends StatelessWidget {
           children: [
             Text(
               'Get Help',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
             Text(
@@ -73,16 +78,31 @@ class SupportSheet extends StatelessWidget {
             _ContactTile(
               icon: Icons.email_rounded,
               label: 'Send us an email',
-              sublabel: 'We reply within 24 hours',
+              sublabel: 'Opens your mail app — we reply within 24 hours',
               onTap: () => _openEmail(context),
             ),
             const SizedBox(height: 12),
             _ContactTile(
               icon: Icons.chat_rounded,
               label: 'Chat on WhatsApp',
-              sublabel: 'Quick support via WhatsApp',
+              sublabel: 'Opens WhatsApp to message our support team',
               onTap: () => _openWhatsApp(context),
             ),
+            const SizedBox(height: 20),
+            Center(
+              child: Text(
+                'We never display our direct contact details in the app '
+                'to reduce spam. Tap an option above to reach us securely.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: muted,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Center(child: MadeInKaseseLabel()),
           ],
         ),
       ),
@@ -107,8 +127,9 @@ class _ContactTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.55);
     return Material(
-      color: primary.withOpacity(0.06),
+      color: primary.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -120,7 +141,7 @@ class _ContactTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.12),
+                  color: primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: primary, size: 22),
@@ -130,12 +151,23 @@ class _ContactTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-                    Text(sublabel, style: theme.textTheme.bodySmall?.copyWith(color: Colors.black45)),
+                    Text(
+                      label,
+                      style: theme.textTheme.bodyLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      sublabel,
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: primary.withOpacity(0.5)),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: primary.withValues(alpha: 0.5),
+              ),
             ],
           ),
         ),

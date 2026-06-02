@@ -23,6 +23,8 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider).valueOrNull ??
+        FirebaseAuth.instance.currentUser;
     final userId = ref.watch(currentUserIdProvider);
     final month = ref.watch(selectedMonthProvider);
     final currency = ref.watch(currencyProvider);
@@ -62,6 +64,7 @@ class DashboardScreen extends ConsumerWidget {
               currency,
               month,
               isDark,
+              user,
               userId,
               budgetsAsync,
               goalsAsync,
@@ -92,6 +95,7 @@ class DashboardScreen extends ConsumerWidget {
     String currency,
     DateTime month,
     bool isDark,
+    User? user,
     String userId,
     AsyncValue<List<Budget>> budgetsAsync,
     AsyncValue<List<GoalEntry>> goalsAsync,
@@ -101,7 +105,7 @@ class DashboardScreen extends ConsumerWidget {
       slivers: [
         // App bar
         SliverToBoxAdapter(
-          child: _buildHeader(context, ref, isDark),
+          child: _buildHeader(context, ref, isDark, user),
         ),
 
         // Balance card
@@ -235,8 +239,8 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, WidgetRef ref, bool isDark) {
-    final user = FirebaseAuth.instance.currentUser;
+  Widget _buildHeader(
+      BuildContext context, WidgetRef ref, bool isDark, User? user) {
     final name = user?.displayName?.split(' ').first ?? 'there';
     final hour = DateTime.now().hour;
     final greeting = hour < 12
@@ -396,7 +400,7 @@ class _BalanceCard extends StatelessWidget {
               const Text(
                 'Monthly Balance',
                 style: TextStyle(
-                    color: Colors.white60,
+                    color: Colors.white70,
                     fontSize: 13,
                     fontWeight: FontWeight.w500),
               ),
@@ -425,7 +429,7 @@ class _BalanceCard extends StatelessWidget {
             Text(
               '${Fmt.percent(savingsRate)} savings rate',
               style: const TextStyle(
-                  color: AppColors.emerald,
+                  color: AppColors.emeraldLight,
                   fontSize: 12,
                   fontWeight: FontWeight.w600),
             ),

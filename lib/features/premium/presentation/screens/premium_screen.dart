@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/ads/ad_manager.dart';
 import '../../../../core/services/premium_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/shared_widgets.dart';
@@ -83,6 +84,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     final status = await PremiumService.purchase(plan.productId);
     if (!mounted) return;
     if (status != null && !status.isFree) {
+      AdManager.instance.setAdsDisabled(status.isPremium);
       ref.invalidate(premiumStatusProvider);
       setState(() { _purchasing = false; _statusMessage = '🎉 Welcome to ${plan.name}!'; });
       await Future.delayed(const Duration(seconds: 2));
@@ -100,6 +102,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     final status = await PremiumService.restore();
     if (!mounted) return;
     if (!status.isFree) {
+      AdManager.instance.setAdsDisabled(status.isPremium);
       ref.invalidate(premiumStatusProvider);
       setState(() { _restoring = false; _statusMessage = '✅ Purchases restored — welcome back!'; });
     } else {

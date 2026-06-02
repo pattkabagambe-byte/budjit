@@ -6,7 +6,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/review/review_service.dart';
 import '../../../../core/support/support_sheet.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
@@ -33,7 +32,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _loadBanner();
-    ReviewService.instance.onAppOpened();
   }
 
   void _loadBanner() {

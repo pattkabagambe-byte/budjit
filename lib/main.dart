@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +9,9 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/ads/ad_lifecycle_handler.dart';
 import 'core/ads/ad_manager.dart';
+import 'core/engagement/app_engagement_scope.dart';
 import 'core/models/app_preferences.dart';
 import 'core/models/layout_mode.dart';
 import 'core/navigation/app_shell.dart';
@@ -71,8 +72,12 @@ void main() async {
       overrides: [
         currencyProvider.overrideWith((ref) => savedCurrency),
       ],
-      child:
-          BudjitApp(firebaseReady: firebaseReady, startupError: startupError),
+      child: AdLifecycleHandler(
+        child: BudjitApp(
+          firebaseReady: firebaseReady,
+          startupError: startupError,
+        ),
+      ),
     ),
   );
 }
@@ -111,27 +116,23 @@ class _Root extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (!firebaseReady) return _StartupError(startupError: startupError);
 
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _Splash();
-        }
+    return ref.watch(currentUserProvider).when(
+          loading: () => const _Splash(),
+          error: (_, __) => const AuthScreen(),
+          data: (user) {
+            // Not signed in — show auth
+            if (user == null) return const AuthScreen();
+            if (!user.isAnonymous) {
+              unawaited(UserProfileService.instance.captureAndSync(user));
+              unawaited(
+                ref.read(layoutModeProvider.notifier).syncWithUser(user.uid),
+              );
+            }
 
-        // Not signed in — show auth
-        final user = snapshot.data;
-        if (user == null) return const AuthScreen();
-        if (!user.isAnonymous) {
-          unawaited(UserProfileService.instance.captureAndSync(user));
-          unawaited(
-            ref.read(layoutModeProvider.notifier).syncWithUser(user.uid),
-          );
-        }
-
-        // Signed in — check onboarding
-        return const _OnboardingGate();
-      },
-    );
+            // Signed in — check onboarding
+            return const _OnboardingGate();
+          },
+        );
   }
 }
 
@@ -149,9 +150,10 @@ class _OnboardingGate extends ConsumerWidget {
       data: (complete) {
         if (!complete) return const OnboardingScreen();
         if (!layoutState.loaded) return const _Splash();
-        return layoutState.activeMode == LayoutMode.tabbedMode
+        final home = layoutState.activeMode == LayoutMode.tabbedMode
             ? const TabbedBudgetPlannerView()
             : const AppShell();
+        return AppEngagementScope(child: home);
       },
     );
   }

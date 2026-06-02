@@ -51,13 +51,14 @@ class _TabbedBudgetPlannerViewState
 
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
   Color get _bg => _isDark ? AppColors.tabBgDark : AppColors.tabBg;
-  Color get _primary => AppColors.tabPrimary;
+  Color get _primary => AppColors.primarySelected(_isDark);
 
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(currentUserIdProvider);
     final currency = ref.watch(currencyProvider);
-    final user = FirebaseAuth.instance.currentUser;
+    final user = ref.watch(currentUserProvider).valueOrNull ??
+        FirebaseAuth.instance.currentUser;
     final displayName = user?.displayName ?? 'Guest User';
 
     return Scaffold(

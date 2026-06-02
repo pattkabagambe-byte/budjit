@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,11 +21,12 @@ class AppTheme {
     final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final text = isDark ? AppColors.darkText : AppColors.textPrimary;
     final mutedText = isDark ? AppColors.darkMuted : AppColors.muted;
+    final navSelectedColor = AppColors.primarySelected(isDark);
 
     final cs = ColorScheme.fromSeed(
       seedColor: primary,
       brightness: brightness,
-      primary: primary,
+      primary: navSelectedColor,
       secondary: accent,
       surface: cardBg,
       error: AppColors.error,
@@ -144,24 +146,27 @@ class AppTheme {
         side: BorderSide(color: border),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: cardBg,
+        backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        height: 70,
-        indicatorColor: primary.withValues(alpha: 0.14),
+        height: 80,
+        indicatorColor: navSelectedColor.withValues(alpha: isDark ? 0.18 : 0.12),
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return GoogleFonts.inter(
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 11,
-            color: selected ? primary : mutedText,
+            fontSize: 12,
+            color: selected ? navSelectedColor : mutedText,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: selected ? primary : mutedText,
-            size: 22,
+            color: selected ? navSelectedColor : mutedText,
+            size: 26,
           );
         }),
       ),

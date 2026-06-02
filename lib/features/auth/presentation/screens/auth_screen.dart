@@ -1,18 +1,22 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/services/user_profile_service.dart';
+import '../../../../core/theme/app_theme.dart';
 
 // Web client ID from google-services.json (oauth_client type 3).
 // Required on Android so GoogleSignIn can produce a valid idToken for Firebase.
 const _kGoogleWebClientId =
     '772109770995-dbc56ba1adcr5sdnpn9rhe8daajm13gk.apps.googleusercontent.com';
 
-class AuthScreen extends StatefulWidget {
+class AuthScreen extends ConsumerStatefulWidget {
   /// When true, links credentials to the current anonymous account instead of
   /// creating a new session — used when a guest user chooses to sign in.
   const AuthScreen({super.key, this.isLinking = false});
@@ -20,10 +24,10 @@ class AuthScreen extends StatefulWidget {
   final bool isLinking;
 
   @override
-  State<AuthScreen> createState() => _AuthScreenState();
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> {
+class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _loading = false;
   String? _error;
 
@@ -37,7 +41,6 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       if (widget.isLinking && auth.currentUser != null) {
         await auth.currentUser!.linkWithCredential(credential);
-        if (mounted) Navigator.of(context).pop();
       } else {
         await auth.signInWithCredential(credential);
       }
@@ -46,34 +49,57 @@ class _AuthScreenState extends State<AuthScreen> {
       // Sign in to that account instead of linking to the anonymous session.
       final recoverable = e.code == 'credential-already-in-use' ||
           e.code == 'email-already-in-use' ||
-          e.code == 'account-exists-with-different-credential' ||
           e.code == 'provider-already-linked';
       if (widget.isLinking && recoverable) {
         // provider-already-linked: anonymous account already has this provider.
         // Sign in with the credential to resolve to the full account.
         final existingCredential = e.credential ?? credential;
         await auth.signInWithCredential(existingCredential);
-        if (mounted) Navigator.of(context).pop();
-        return;
+      } else {
+        rethrow;
       }
-      rethrow;
     }
     final user = auth.currentUser;
-    if (user == null || user.isAnonymous) return;
-    if (displayName != null &&
-        displayName.isNotEmpty &&
-        user.displayName != displayName) {
-      await user.updateDisplayName(displayName);
+    ref.invalidate(currentUserProvider);
+    if (user != null && !user.isAnonymous) {
+      unawaited(_syncProfile(
+        user,
+        displayName: displayName,
+        email: email,
+        photoUrl: photoUrl,
+      ));
     }
-    if (photoUrl != null && photoUrl.isNotEmpty && user.photoURL != photoUrl) {
-      await user.updatePhotoURL(photoUrl);
+    if (mounted && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
     }
-    await UserProfileService.instance.captureAndSync(
-      user,
-      displayName: displayName,
-      email: email,
-      photoUrl: photoUrl,
-    );
+  }
+
+  Future<void> _syncProfile(
+    User user, {
+    String? displayName,
+    String? email,
+    String? photoUrl,
+  }) async {
+    try {
+      if (displayName != null &&
+          displayName.isNotEmpty &&
+          user.displayName != displayName) {
+        await user.updateDisplayName(displayName);
+      }
+      if (photoUrl != null &&
+          photoUrl.isNotEmpty &&
+          user.photoURL != photoUrl) {
+        await user.updatePhotoURL(photoUrl);
+      }
+      await UserProfileService.instance.captureAndSync(
+        user,
+        displayName: displayName,
+        email: email,
+        photoUrl: photoUrl,
+      );
+    } catch (_) {
+      // The Firebase sign-in is valid even if optional profile sync fails.
+    }
   }
 
   String _authErrorMessage(Object e, {required String provider}) {
