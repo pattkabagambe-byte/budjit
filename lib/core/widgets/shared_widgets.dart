@@ -4,6 +4,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_tokens.dart';
 
 // ── User Avatar (handles network image + fallback initials) ───────────────────
 
@@ -21,27 +22,38 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial =
-        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+    final words = displayName
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    final initial = words.isEmpty
+        ? 'U'
+        : words.length == 1
+            ? words.first[0].toUpperCase()
+            : '${words.first[0]}${words.last[0]}'.toUpperCase();
     final fontSize = radius * 0.7;
 
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: AppColors.emerald.withValues(alpha: 0.18),
-      child: ClipOval(
-        child: photoUrl != null && photoUrl!.isNotEmpty
-            ? Image.network(
-                photoUrl!,
-                width: radius * 2,
-                height: radius * 2,
-                fit: BoxFit.cover,
-                // While loading — show initial behind it
-                loadingBuilder: (_, child, progress) =>
-                    progress == null ? child : _Initial(initial, fontSize),
-                // On error — show initial
-                errorBuilder: (_, __, ___) => _Initial(initial, fontSize),
-              )
-            : _Initial(initial, fontSize),
+    return Semantics(
+      image: true,
+      label: '$displayName profile photo',
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+        child: ClipOval(
+          child: photoUrl != null && photoUrl!.isNotEmpty
+              ? Image.network(
+                  photoUrl!,
+                  width: radius * 2,
+                  height: radius * 2,
+                  cacheWidth: (radius * 4).round(),
+                  fit: BoxFit.cover,
+                  loadingBuilder: (_, child, progress) =>
+                      progress == null ? child : _Initial(initial, fontSize),
+                  errorBuilder: (_, __, ___) => _Initial(initial, fontSize),
+                )
+              : _Initial(initial, fontSize),
+        ),
       ),
     );
   }
@@ -55,12 +67,12 @@ class _Initial extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.emerald.withValues(alpha: 0.18),
+      color: AppColors.primary.withValues(alpha: 0.12),
       alignment: Alignment.center,
       child: Text(
         letter,
         style: TextStyle(
-          color: AppColors.emerald,
+          color: AppColors.primary,
           fontWeight: FontWeight.w800,
           fontSize: fontSize,
         ),
@@ -92,13 +104,7 @@ class GradientCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: borderRadius ?? BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withOpacity(0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: AppShadows.hero,
       ),
       child: child,
     );
@@ -112,7 +118,8 @@ class SectionHeader extends StatelessWidget {
   final String? action;
   final VoidCallback? onAction;
 
-  const SectionHeader({super.key, required this.title, this.action, this.onAction});
+  const SectionHeader(
+      {super.key, required this.title, this.action, this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +131,8 @@ class SectionHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
           ),
           if (action != null)
             GestureDetector(
@@ -132,7 +140,7 @@ class SectionHeader extends StatelessWidget {
               child: Text(
                 action!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.emerald,
+                  color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -368,7 +376,8 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               title,
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -411,7 +420,8 @@ class ShimmerBox extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
       baseColor: isDark ? const Color(0xFF1A2540) : const Color(0xFFEEEEEE),
-      highlightColor: isDark ? const Color(0xFF2A3A5C) : const Color(0xFFF5F5F5),
+      highlightColor:
+          isDark ? const Color(0xFF2A3A5C) : const Color(0xFFF5F5F5),
       child: Container(
         width: width,
         height: height,
@@ -569,15 +579,21 @@ class InfoTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(title,
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
                   if (subtitle != null)
-                    Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                    Text(subtitle!,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: Colors.grey)),
                 ],
               ),
             ),
-            if (trailing != null) trailing!
+            if (trailing != null)
+              trailing!
             else if (onTap != null)
-              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: 20),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.grey.shade400, size: 20),
           ],
         ),
       ),

@@ -2,8 +2,17 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Brand
-  static const navy = Color(0xFF0F1E3C);
-  static const navyLight = Color(0xFF1E3A5F);
+  static const primary = Color(0xFF7D2935);
+  static const primaryLight = Color(0xFFA74754);
+  static const primaryDark = Color(0xFF531923);
+  static const background = Color(0xFFF8F1E7);
+  static const card = Colors.white;
+  static const border = Color(0xFFE9DBC9);
+  static const muted = Color(0xFF786A61);
+
+  // Legacy aliases kept while feature screens move onto named tokens.
+  static const navy = primary;
+  static const navyLight = primaryLight;
   static const emerald = Color(0xFF10B981);
   static const emeraldLight = Color(0xFF34D399);
   static const amber = Color(0xFFF59E0B);
@@ -16,16 +25,16 @@ class AppColors {
   static const pink = Color(0xFFEC4899);
 
   // Dark surfaces
-  static const darkBg = Color(0xFF060F1E);
-  static const darkSurface = Color(0xFF0F1E3C);
-  static const darkCard = Color(0xFF1A2540);
-  static const darkCardAlt = Color(0xFF162035);
-  static const darkBorder = Color(0xFF2A3A5C);
+  static const darkBg = Color(0xFF160F10);
+  static const darkSurface = Color(0xFF211617);
+  static const darkCard = Color(0xFF2B1D1F);
+  static const darkCardAlt = Color(0xFF24191A);
+  static const darkBorder = Color(0xFF493538);
 
   // Light surfaces
-  static const lightBg = Color(0xFFF4F6FA);
-  static const lightCard = Colors.white;
-  static const lightBorder = Color(0xFFE8EDF4);
+  static const lightBg = background;
+  static const lightCard = card;
+  static const lightBorder = border;
 
   // Category colors
   static const catFood = Color(0xFFFF6B6B);
@@ -50,8 +59,10 @@ class AppColors {
   static const gradientNavy = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [navy, Color(0xFF1A3A6E)],
+    colors: [primaryDark, primary],
   );
+
+  static const gradientBurgundy = gradientNavy;
 
   static const gradientEmerald = LinearGradient(
     begin: Alignment.topLeft,
@@ -78,17 +89,17 @@ class AppColors {
   );
 
   // ── Tabbed Mode palette ───────────────────────────────────────────────────
-  static const tabBg = Color(0xFFF5EDE0);
-  static const tabBgDark = Color(0xFF1A0E08);
-  static const tabPrimary = Color(0xFF8B3030);
-  static const tabPrimaryLight = Color(0xFFB04848);
-  static const tabCard = Colors.white;
-  static const tabCardDark = Color(0xFF2A1810);
-  static const tabBorder = Color(0xFFE8D8C4);
-  static const tabBorderDark = Color(0xFF3A2E20);
-  static const tabMuted = Color(0xFF7A6A5A);
-  static const tabMutedDark = Color(0xFF9A8A7A);
-  static const tabDarkSurface = Color(0xFF1C1A18);
+  static const tabBg = background;
+  static const tabBgDark = darkBg;
+  static const tabPrimary = primary;
+  static const tabPrimaryLight = primaryLight;
+  static const tabCard = card;
+  static const tabCardDark = darkCard;
+  static const tabBorder = border;
+  static const tabBorderDark = darkBorder;
+  static const tabMuted = muted;
+  static const tabMutedDark = Color(0xFFB9A5A0);
+  static const tabDarkSurface = Color(0xFF20191A);
 
   static Color categoryColor(String category) {
     return switch (category.toLowerCase()) {

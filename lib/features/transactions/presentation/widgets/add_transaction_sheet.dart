@@ -10,13 +10,13 @@ import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../categories/presentation/widgets/add_category_sheet.dart';
-import '../../domain/category_data.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
   const AddTransactionSheet({super.key});
 
   @override
-  ConsumerState<AddTransactionSheet> createState() => _AddTransactionSheetState();
+  ConsumerState<AddTransactionSheet> createState() =>
+      _AddTransactionSheetState();
 }
 
 class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
@@ -35,8 +35,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     super.initState();
     _tabCtrl = TabController(length: 2, vsync: this);
     _tabCtrl.addListener(() => setState(() {
-          _selectedCategoryId =
-              _tabCtrl.index == 0 ? 'food' : 'salary';
+          _selectedCategoryId = _tabCtrl.index == 0 ? 'food' : 'salary';
         }));
   }
 
@@ -66,7 +65,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     }
     final userId = ref.read(currentUserIdProvider);
     final title = _titleCtrl.text.trim().isEmpty
-        ? resolveCategory(_selectedCategoryId, isIncome: _isIncome, custom: ref.read(customTxCategoriesProvider(userId))).label
+        ? resolveCategory(_selectedCategoryId,
+                isIncome: _isIncome,
+                custom: ref.read(customTxCategoriesProvider(userId)))
+            .label
         : _titleCtrl.text.trim();
 
     setState(() => _saving = true);
@@ -139,7 +141,8 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
               indicatorSize: TabBarIndicatorSize.tab,
               labelColor: Colors.white,
               unselectedLabelColor: isDark ? Colors.white54 : Colors.black45,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
               dividerColor: Colors.transparent,
               tabs: const [Tab(text: 'Expense'), Tab(text: 'Income')],
             ),
@@ -182,7 +185,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                     focusedBorder: InputBorder.none,
                     filled: false,
                     hintText: '0',
-                    hintStyle: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.black12),
+                    hintStyle: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black12),
                     contentPadding: EdgeInsets.zero,
                   ),
                   autofocus: true,
@@ -208,12 +214,15 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                       decoration: BoxDecoration(
                         color: isDark ? AppColors.darkCard : AppColors.lightBg,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.emerald.withOpacity(0.5), width: 2),
+                        border: Border.all(
+                            color: AppColors.emerald.withOpacity(0.5),
+                            width: 2),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.add_rounded, color: AppColors.emerald, size: 28),
+                          Icon(Icons.add_rounded,
+                              color: AppColors.emerald, size: 28),
                           const SizedBox(height: 4),
                           Text(
                             'New',
@@ -294,7 +303,8 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                 child: OutlinedButton.icon(
                   onPressed: _pickDate,
                   icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                  label: Text(Fmt.dateShort(_date), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  label: Text(Fmt.dateShort(_date),
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
@@ -325,11 +335,13 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   )
                 : Text(
                     _isIncome ? 'Add Income' : 'Add Expense',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 16),
                   ),
           ),
           const SizedBox(height: 24),

@@ -95,8 +95,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     height: 8,
                     decoration: BoxDecoration(
                       color: i <= _page
-                          ? AppColors.emerald
-                          : AppColors.emerald.withValues(alpha: 0.25),
+                          ? AppColors.primary
+                          : AppColors.primary.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -123,7 +123,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     selected: _selectedIncomes,
                     onToggle: (id) => setState(() {
                       if (_selectedIncomes.contains(id)) {
-                        if (_selectedIncomes.length > 1) _selectedIncomes.remove(id);
+                        if (_selectedIncomes.length > 1)
+                          _selectedIncomes.remove(id);
                       } else {
                         _selectedIncomes.add(id);
                       }
@@ -154,9 +155,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             }
                           : null,
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.emerald,
+                        backgroundColor: AppColors.primary,
                         disabledBackgroundColor:
-                            AppColors.emerald.withValues(alpha: 0.4),
+                            AppColors.primary.withValues(alpha: 0.4),
                         minimumSize: const Size.fromHeight(56),
                       ),
                       child: Text(
@@ -222,9 +223,7 @@ class _WelcomePage extends StatelessWidget {
             child: const Icon(Icons.auto_graph_rounded,
                 color: Colors.white, size: 52),
           ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
-
           const SizedBox(height: 32),
-
           Text(
             'Welcome to Budjit',
             style: TextStyle(
@@ -234,9 +233,7 @@ class _WelcomePage extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
-
           const SizedBox(height: 12),
-
           Text(
             'The smartest way to track your money,\nbuild savings, and reach your goals.',
             style: TextStyle(
@@ -246,16 +243,23 @@ class _WelcomePage extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 400.ms),
-
           const SizedBox(height: 40),
-
           ...[
-            (Icons.offline_bolt_rounded, 'Works offline',
-                'Your data is always available'),
-            (Icons.lock_rounded, 'Private & secure',
-                'Your data stays on your device'),
-            (Icons.bar_chart_rounded, 'Beautiful insights',
-                'Understand your money at a glance'),
+            (
+              Icons.offline_bolt_rounded,
+              'Works offline',
+              'Your data is always available'
+            ),
+            (
+              Icons.lock_rounded,
+              'Private & secure',
+              'Your data stays on your device'
+            ),
+            (
+              Icons.bar_chart_rounded,
+              'Beautiful insights',
+              'Understand your money at a glance'
+            ),
           ].asMap().entries.map(
                 (e) => Padding(
                   padding: const EdgeInsets.only(bottom: 16),
@@ -293,7 +297,10 @@ class _WelcomePage extends StatelessWidget {
                       ),
                     ],
                   ),
-                ).animate().fadeIn(delay: (500 + e.key * 80).ms).slideX(begin: 0.1),
+                )
+                    .animate()
+                    .fadeIn(delay: (500 + e.key * 80).ms)
+                    .slideX(begin: 0.1),
               ),
         ],
       ),
@@ -335,8 +342,7 @@ class _GoalPage extends StatelessWidget {
           Text(
             'We\'ll personalise your experience',
             style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.white54 : Colors.black45),
+                fontSize: 14, color: isDark ? Colors.white54 : Colors.black45),
           ).animate().fadeIn(delay: 100.ms),
           const SizedBox(height: 24),
           Expanded(
@@ -372,8 +378,7 @@ class _GoalPage extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Text(goal.emoji,
-                            style: const TextStyle(fontSize: 20)),
+                        Text(goal.emoji, style: const TextStyle(fontSize: 20)),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -390,8 +395,7 @@ class _GoalPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                ).animate().fadeIn(
-                    duration: 300.ms, delay: (e.key * 40).ms);
+                ).animate().fadeIn(duration: 300.ms, delay: (e.key * 40).ms);
               }).toList(),
             ),
           ),
@@ -435,8 +439,7 @@ class _IncomePage extends StatelessWidget {
           Text(
             'Select all that apply',
             style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.white54 : Colors.black45),
+                fontSize: 14, color: isDark ? Colors.white54 : Colors.black45),
           ).animate().fadeIn(delay: 100.ms),
           const SizedBox(height: 20),
           Expanded(
@@ -471,8 +474,7 @@ class _IncomePage extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Text(t.emoji,
-                            style: const TextStyle(fontSize: 24)),
+                        Text(t.emoji, style: const TextStyle(fontSize: 24)),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Text(
@@ -496,9 +498,7 @@ class _IncomePage extends StatelessWidget {
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.emerald
-                                  : (isDark
-                                      ? Colors.white30
-                                      : Colors.black26),
+                                  : (isDark ? Colors.white30 : Colors.black26),
                               width: 2,
                             ),
                           ),
@@ -510,8 +510,7 @@ class _IncomePage extends StatelessWidget {
                       ],
                     ),
                   ),
-                ).animate().fadeIn(
-                    duration: 300.ms, delay: (i * 40).ms);
+                ).animate().fadeIn(duration: 300.ms, delay: (i * 40).ms);
               },
             ),
           ),
@@ -582,8 +581,7 @@ class _CurrencyPage extends StatelessWidget {
           Text(
             'You can change this any time in Settings',
             style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.white54 : Colors.black45),
+                fontSize: 14, color: isDark ? Colors.white54 : Colors.black45),
           ).animate().fadeIn(delay: 100.ms),
           const SizedBox(height: 20),
           Expanded(
@@ -617,8 +615,7 @@ class _CurrencyPage extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Text(c.flag,
-                            style: const TextStyle(fontSize: 24)),
+                        Text(c.flag, style: const TextStyle(fontSize: 24)),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
@@ -640,9 +637,8 @@ class _CurrencyPage extends StatelessWidget {
                                 c.name,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isSelected
-                                      ? Colors.white60
-                                      : Colors.grey,
+                                  color:
+                                      isSelected ? Colors.white60 : Colors.grey,
                                 ),
                               ),
                             ],
@@ -654,8 +650,7 @@ class _CurrencyPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                ).animate().fadeIn(
-                    duration: 250.ms, delay: (i * 30).ms);
+                ).animate().fadeIn(duration: 250.ms, delay: (i * 30).ms);
               },
             ),
           ),

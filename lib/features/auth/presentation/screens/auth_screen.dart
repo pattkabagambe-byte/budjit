@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/user_profile_service.dart';
 
 // Web client ID from google-services.json (oauth_client type 3).
 // Required on Android so GoogleSignIn can produce a valid idToken for Firebase.
@@ -26,7 +27,12 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _loading = false;
   String? _error;
 
-  Future<void> _applyCredential(AuthCredential credential) async {
+  Future<void> _applyCredential(
+    AuthCredential credential, {
+    String? displayName,
+    String? email,
+    String? photoUrl,
+  }) async {
     final auth = FirebaseAuth.instance;
     try {
       if (widget.isLinking && auth.currentUser != null) {
@@ -52,6 +58,22 @@ class _AuthScreenState extends State<AuthScreen> {
       }
       rethrow;
     }
+    final user = auth.currentUser;
+    if (user == null || user.isAnonymous) return;
+    if (displayName != null &&
+        displayName.isNotEmpty &&
+        user.displayName != displayName) {
+      await user.updateDisplayName(displayName);
+    }
+    if (photoUrl != null && photoUrl.isNotEmpty && user.photoURL != photoUrl) {
+      await user.updatePhotoURL(photoUrl);
+    }
+    await UserProfileService.instance.captureAndSync(
+      user,
+      displayName: displayName,
+      email: email,
+      photoUrl: photoUrl,
+    );
   }
 
   String _authErrorMessage(Object e, {required String provider}) {
@@ -78,7 +100,10 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final googleSignIn = GoogleSignIn(serverClientId: _kGoogleWebClientId);
       // Sign out of any cached session so the account picker always appears,
@@ -100,10 +125,15 @@ class _AuthScreenState extends State<AuthScreen> {
         });
         return;
       }
-      await _applyCredential(GoogleAuthProvider.credential(
-        accessToken: gAuth.accessToken,
-        idToken: gAuth.idToken,
-      ));
+      await _applyCredential(
+        GoogleAuthProvider.credential(
+          accessToken: gAuth.accessToken,
+          idToken: gAuth.idToken,
+        ),
+        displayName: gUser.displayName,
+        email: gUser.email,
+        photoUrl: gUser.photoUrl,
+      );
       if (mounted) setState(() => _loading = false);
     } catch (e) {
       final msg = _authErrorMessage(e, provider: 'Google');
@@ -115,10 +145,16 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _signInWithApple() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName
+        ],
       );
       await _applyCredential(OAuthProvider('apple.com').credential(
         idToken: appleCredential.identityToken,
@@ -135,11 +171,17 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _continueAsGuest() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       await FirebaseAuth.instance.signInAnonymously();
     } catch (e) {
-      setState(() { _error = 'Could not start guest session.'; _loading = false; });
+      setState(() {
+        _error = 'Could not start guest session.';
+        _loading = false;
+      });
     }
   }
 
@@ -156,30 +198,43 @@ class _AuthScreenState extends State<AuthScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress),
+              TextField(
+                  controller: emailCtrl,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 8),
-              TextField(controller: passCtrl, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
+              TextField(
+                  controller: passCtrl,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                  obscureText: true),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => setDialogState(() => isRegister = !isRegister),
-                child: Text(isRegister ? 'Already have an account? Sign in' : 'No account? Create one'),
+                child: Text(isRegister
+                    ? 'Already have an account? Sign in'
+                    : 'No account? Create one'),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () async {
                 try {
                   if (isRegister) {
-                    await FirebaseAuth.instance.createUserWithEmailAndPassword(email: emailCtrl.text.trim(), password: passCtrl.text);
+                    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                        email: emailCtrl.text.trim(), password: passCtrl.text);
                   } else {
-                    await FirebaseAuth.instance.signInWithEmailAndPassword(email: emailCtrl.text.trim(), password: passCtrl.text);
+                    await FirebaseAuth.instance.signInWithEmailAndPassword(
+                        email: emailCtrl.text.trim(), password: passCtrl.text);
                   }
                   if (ctx.mounted) Navigator.pop(ctx);
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
+                    ScaffoldMessenger.of(ctx)
+                        .showSnackBar(SnackBar(content: Text(e.toString())));
                   }
                 }
               },
@@ -204,21 +259,27 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               const Spacer(),
               Container(
-                width: 72, height: 72,
-                decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(20)),
-                child: const Icon(Icons.auto_graph_rounded, color: Colors.white, size: 36),
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.circular(20)),
+                child: const Icon(Icons.auto_graph_rounded,
+                    color: Colors.white, size: 36),
               ),
               const SizedBox(height: 24),
               Text(
                 'Welcome',
-                style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900, color: AppTheme.primary),
+                style: theme.textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.w900, color: AppTheme.primary),
               ),
               const SizedBox(height: 8),
               Text(
                 widget.isLinking
                     ? 'Sign in to sync your data across all devices.'
                     : 'Track your budget. Sign in to sync, or continue as guest.',
-                style: theme.textTheme.bodyLarge?.copyWith(color: Colors.black54),
+                style:
+                    theme.textTheme.bodyLarge?.copyWith(color: Colors.black54),
               ),
               const Spacer(),
               if (_loading)
@@ -227,8 +288,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 if (_error != null)
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
-                    child: Text(_error!, style: TextStyle(color: Colors.red.shade800)),
+                    decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Text(_error!,
+                        style: TextStyle(color: Colors.red.shade800)),
                   ),
                 if (_error != null) const SizedBox(height: 12),
                 _SocialButton(
@@ -261,7 +325,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     onPressed: _continueAsGuest,
                     child: const Text(
                       'Continue as Guest',
-                      style: TextStyle(color: Colors.black45, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          color: Colors.black45, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -282,7 +347,13 @@ class _SocialButton extends StatelessWidget {
   final Color color, textColor;
   final Color? borderColor;
 
-  const _SocialButton({required this.onPressed, required this.label, required this.icon, required this.color, required this.textColor, this.borderColor});
+  const _SocialButton(
+      {required this.onPressed,
+      required this.label,
+      required this.icon,
+      required this.color,
+      required this.textColor,
+      this.borderColor});
 
   @override
   Widget build(BuildContext context) {
@@ -295,10 +366,12 @@ class _SocialButton extends StatelessWidget {
           foregroundColor: textColor,
           elevation: 0,
           side: borderColor != null ? BorderSide(color: borderColor!) : null,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         icon: Icon(icon),
-        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+        label: Text(label,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
       ),
     );
   }

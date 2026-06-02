@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,51 +7,18 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/models/app_preferences.dart';
 import '../../../../core/models/layout_mode.dart';
+import '../../../../core/providers/app_preferences_provider.dart';
 import '../../../../core/providers/core_providers.dart';
-import '../../../../core/providers/layout_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/planner_menu_sheet.dart';
 import '../../../../core/widgets/shared_widgets.dart';
 import '../../../transactions/domain/category_data.dart';
-
-// ── Report period ─────────────────────────────────────────────────────────────
-
-enum _Period { weekly, monthly, quarterly, annual }
-
-extension _PeriodX on _Period {
-  String get label => switch (this) {
-        _Period.weekly => 'Weekly',
-        _Period.monthly => 'Monthly',
-        _Period.quarterly => 'Quarterly',
-        _Period.annual => 'Annual',
-      };
-
-  (DateTime, DateTime) get range {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    return switch (this) {
-      _Period.weekly => () {
-          final monday = today.subtract(Duration(days: today.weekday - 1));
-          return (monday, monday.add(const Duration(days: 6)));
-        }(),
-      _Period.monthly => (
-          DateTime(now.year, now.month, 1),
-          DateTime(now.year, now.month + 1, 0),
-        ),
-      _Period.quarterly => () {
-          final qStart = ((now.month - 1) ~/ 3) * 3 + 1;
-          return (DateTime(now.year, qStart, 1), DateTime(now.year, qStart + 3, 0));
-        }(),
-      _Period.annual => (DateTime(now.year, 1, 1), DateTime(now.year, 12, 31)),
-    };
-  }
-
-  String get rangeLabel {
-    final (s, e) = range;
-    return '${DateFormat('d MMM yyyy').format(s)} – ${DateFormat('d MMM yyyy').format(e)}';
-  }
-}
+import '../../domain/planner_report.dart';
+import '../../../settings/presentation/screens/settings_screen.dart';
 
 // ── Root scaffold ─────────────────────────────────────────────────────────────
 
@@ -84,19 +52,12 @@ class _TabbedBudgetPlannerViewState
   Color get _bg => _isDark ? AppColors.tabBgDark : AppColors.tabBg;
   Color get _primary => AppColors.tabPrimary;
 
-  void _switchToDefault() async {
-    await ref.read(layoutModeProvider.notifier).setMode(LayoutMode.defaultMode);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Switched to Default Mode')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(currentUserIdProvider);
     final currency = ref.watch(currencyProvider);
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName ?? 'Guest User';
 
     return Scaffold(
       backgroundColor: _bg,
@@ -114,15 +75,21 @@ class _TabbedBudgetPlannerViewState
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.swap_horiz_rounded, color: _primary),
-            tooltip: 'Switch to Default Mode',
-            onPressed: _switchToDefault,
+            icon: Icon(Icons.more_horiz_rounded, color: _primary),
+            tooltip: 'Budget Planner menu',
+            onPressed: () => PlannerMenuSheet.show(
+              context,
+              currentMode: LayoutMode.tabbedMode,
+              onOpenSettings: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              ),
+              onExportReport: () => _tabCtrl.animateTo(2),
+            ),
           ),
           const SizedBox(width: 4),
           UserAvatar(
-            photoUrl: null,
-            displayName:
-                ref.read(currentUserIdProvider).substring(0, 1).toUpperCase(),
+            photoUrl: user?.photoURL,
+            displayName: displayName,
             radius: 16,
           ),
           const SizedBox(width: 12),
@@ -134,14 +101,18 @@ class _TabbedBudgetPlannerViewState
               _isDark ? AppColors.tabMutedDark : AppColors.tabMuted,
           indicatorColor: _primary,
           indicatorWeight: 2.5,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          labelStyle:
+              const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           unselectedLabelStyle:
               const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-          dividerColor:
-              _isDark ? AppColors.tabBorderDark : AppColors.tabBorder,
+          dividerColor: _isDark ? AppColors.tabBorderDark : AppColors.tabBorder,
           tabs: const [
-            Tab(icon: Icon(Icons.receipt_long_outlined, size: 20), text: 'Actual'),
-            Tab(icon: Icon(Icons.account_balance_wallet_outlined, size: 20), text: 'Budget'),
+            Tab(
+                icon: Icon(Icons.receipt_long_outlined, size: 20),
+                text: 'Actual'),
+            Tab(
+                icon: Icon(Icons.account_balance_wallet_outlined, size: 20),
+                text: 'Budget'),
             Tab(icon: Icon(Icons.bar_chart_rounded, size: 20), text: 'Reports'),
           ],
         ),
@@ -189,8 +160,7 @@ class _ActualTabState extends ConsumerState<_ActualTab> {
   }
 
   Future<void> _submit() async {
-    final amount =
-        double.tryParse(_amountCtrl.text.replaceAll(',', '').trim());
+    final amount = double.tryParse(_amountCtrl.text.replaceAll(',', '').trim());
     if (amount == null || amount <= 0) {
       _showError('Enter a valid amount greater than zero');
       return;
@@ -217,7 +187,7 @@ class _ActualTabState extends ConsumerState<_ActualTab> {
       _submitting = false;
       _date = DateTime.now();
     });
-    HapticFeedback.mediumImpact();
+    _mediumHaptic(ref);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Expense added')),
@@ -310,8 +280,7 @@ class _ActualTabState extends ConsumerState<_ActualTab> {
                 borderRadius: BorderRadius.all(Radius.circular(20))),
             error: (e, _) => Text('Error: $e'),
             data: (all) {
-              final expenses =
-                  all.where((t) => !t.isIncome).toList();
+              final expenses = all.where((t) => !t.isIncome).toList();
               return _TCard(
                 isDark: widget.isDark,
                 child: Column(
@@ -328,7 +297,8 @@ class _ActualTabState extends ConsumerState<_ActualTab> {
                             emoji: categoryByIdOrDefault(e.category).emoji,
                             label: e.title,
                             sub: categoryByIdOrDefault(e.category).label,
-                            amount: Fmt.money(e.amount, currency: widget.currency),
+                            amount:
+                                Fmt.money(e.amount, currency: widget.currency),
                             isDark: widget.isDark,
                             onDelete: () => _delete(e.id),
                           )),
@@ -343,10 +313,10 @@ class _ActualTabState extends ConsumerState<_ActualTab> {
   }
 
   Future<void> _delete(String id) async {
-    final confirmed = await _confirmDelete(context);
+    final confirmed = await _confirmDelete(context, ref);
     if (confirmed) {
       await ref.read(databaseProvider).deleteTransaction(id);
-      HapticFeedback.lightImpact();
+      _lightHaptic(ref);
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Expense deleted')));
@@ -404,12 +374,15 @@ class _BudgetTabState extends ConsumerState<_BudgetTab>
             indicatorWeight: 2,
             labelStyle:
                 const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            dividerColor: widget.isDark
-                ? AppColors.tabBorderDark
-                : AppColors.tabBorder,
+            dividerColor:
+                widget.isDark ? AppColors.tabBorderDark : AppColors.tabBorder,
             tabs: const [
-              Tab(icon: Icon(Icons.arrow_downward_rounded, size: 18), text: 'Income'),
-              Tab(icon: Icon(Icons.arrow_upward_rounded, size: 18), text: 'Planned expense'),
+              Tab(
+                  icon: Icon(Icons.arrow_downward_rounded, size: 18),
+                  text: 'Income'),
+              Tab(
+                  icon: Icon(Icons.arrow_upward_rounded, size: 18),
+                  text: 'Planned expense'),
             ],
           ),
         ),
@@ -461,12 +434,12 @@ class _IncomeSubTabState extends ConsumerState<_IncomeSubTab> {
   }
 
   Future<void> _submit() async {
-    final amount =
-        double.tryParse(_amountCtrl.text.replaceAll(',', '').trim());
+    final amount = double.tryParse(_amountCtrl.text.replaceAll(',', '').trim());
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Enter a valid amount'), backgroundColor: AppColors.rose),
+            content: Text('Enter a valid amount'),
+            backgroundColor: AppColors.rose),
       );
       return;
     }
@@ -489,7 +462,7 @@ class _IncomeSubTabState extends ConsumerState<_IncomeSubTab> {
     _labelCtrl.clear();
     _amountCtrl.clear();
     setState(() => _submitting = false);
-    HapticFeedback.mediumImpact();
+    _mediumHaptic(ref);
     if (mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Income added')));
@@ -546,9 +519,7 @@ class _IncomeSubTabState extends ConsumerState<_IncomeSubTab> {
               ],
             ),
           ).animate().fadeIn(duration: 350.ms),
-
           const SizedBox(height: 16),
-
           txAsync.when(
             loading: () => const ShimmerBox(
                 width: double.infinity,
@@ -562,17 +533,23 @@ class _IncomeSubTabState extends ConsumerState<_IncomeSubTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _TCardTitle('Income lines (${income.length})', widget.isDark),
+                    _TCardTitle(
+                        'Income lines (${income.length})', widget.isDark),
                     const SizedBox(height: 8),
                     if (income.isEmpty)
                       _TEmptyState('No income added yet')
                     else
                       ...income.map((e) => _TEntryRow(
                             id: e.id,
-                            emoji: categoryByIdOrDefault(e.category, isIncome: true).emoji,
+                            emoji: categoryByIdOrDefault(e.category,
+                                    isIncome: true)
+                                .emoji,
                             label: e.title,
-                            sub: categoryByIdOrDefault(e.category, isIncome: true).label,
-                            amount: Fmt.money(e.amount, currency: widget.currency),
+                            sub: categoryByIdOrDefault(e.category,
+                                    isIncome: true)
+                                .label,
+                            amount:
+                                Fmt.money(e.amount, currency: widget.currency),
                             isDark: widget.isDark,
                             onDelete: () => _delete(e.id),
                           )),
@@ -587,10 +564,10 @@ class _IncomeSubTabState extends ConsumerState<_IncomeSubTab> {
   }
 
   Future<void> _delete(String id) async {
-    final confirmed = await _confirmDelete(context);
+    final confirmed = await _confirmDelete(context, ref);
     if (confirmed) {
       await ref.read(databaseProvider).deleteTransaction(id);
-      HapticFeedback.lightImpact();
+      _lightHaptic(ref);
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Income deleted')));
@@ -628,12 +605,12 @@ class _PlannedExpenseSubTabState extends ConsumerState<_PlannedExpenseSubTab> {
   }
 
   Future<void> _submit() async {
-    final amount =
-        double.tryParse(_amountCtrl.text.replaceAll(',', '').trim());
+    final amount = double.tryParse(_amountCtrl.text.replaceAll(',', '').trim());
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Enter a valid amount'), backgroundColor: AppColors.rose),
+            content: Text('Enter a valid amount'),
+            backgroundColor: AppColors.rose),
       );
       return;
     }
@@ -651,7 +628,7 @@ class _PlannedExpenseSubTabState extends ConsumerState<_PlannedExpenseSubTab> {
     _labelCtrl.clear();
     _amountCtrl.clear();
     setState(() => _submitting = false);
-    HapticFeedback.mediumImpact();
+    _mediumHaptic(ref);
     if (mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Budget line added')));
@@ -708,9 +685,7 @@ class _PlannedExpenseSubTabState extends ConsumerState<_PlannedExpenseSubTab> {
               ],
             ),
           ).animate().fadeIn(duration: 350.ms),
-
           const SizedBox(height: 16),
-
           budgetsAsync.when(
             loading: () => const ShimmerBox(
                 width: double.infinity,
@@ -722,7 +697,8 @@ class _PlannedExpenseSubTabState extends ConsumerState<_PlannedExpenseSubTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _TCardTitle('Expense budget lines (${budgets.length})', widget.isDark),
+                  _TCardTitle('Expense budget lines (${budgets.length})',
+                      widget.isDark),
                   const SizedBox(height: 8),
                   if (budgets.isEmpty)
                     _TEmptyState('No planned expenses yet')
@@ -730,9 +706,11 @@ class _PlannedExpenseSubTabState extends ConsumerState<_PlannedExpenseSubTab> {
                     ...budgets.map((b) => _TEntryRow(
                           id: b.id,
                           emoji: categoryByIdOrDefault(b.category).emoji,
-                          label: b.label ?? categoryByIdOrDefault(b.category).label,
+                          label: b.label ??
+                              categoryByIdOrDefault(b.category).label,
                           sub: categoryByIdOrDefault(b.category).label,
-                          amount: Fmt.money(b.limitAmount, currency: widget.currency),
+                          amount: Fmt.money(b.limitAmount,
+                              currency: widget.currency),
                           isDark: widget.isDark,
                           onDelete: () => _deleteBudget(b.id),
                         )),
@@ -746,10 +724,10 @@ class _PlannedExpenseSubTabState extends ConsumerState<_PlannedExpenseSubTab> {
   }
 
   Future<void> _deleteBudget(String id) async {
-    final confirmed = await _confirmDelete(context);
+    final confirmed = await _confirmDelete(context, ref);
     if (confirmed) {
       await ref.read(databaseProvider).deleteBudget(id);
-      HapticFeedback.lightImpact();
+      _lightHaptic(ref);
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Budget line deleted')));
@@ -775,7 +753,19 @@ class _ReportsTab extends ConsumerStatefulWidget {
 }
 
 class _ReportsTabState extends ConsumerState<_ReportsTab> {
-  _Period _period = _Period.monthly;
+  late PlannerReportPeriod _period;
+
+  @override
+  void initState() {
+    super.initState();
+    _period = ref.read(appPreferencesProvider).reportPeriod;
+  }
+
+  String get _periodRangeLabel {
+    final (start, end) = _period.range();
+    return '${DateFormat('d MMM yyyy').format(start)} - '
+        '${DateFormat('d MMM yyyy').format(end)}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -788,14 +778,13 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
       data: (allTx) => budgetsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (budgets) =>
-            _buildReport(allTx, budgets),
+        data: (budgets) => _buildReport(allTx, budgets),
       ),
     );
   }
 
   Widget _buildReport(List<TxEntry> allTx, List<Budget> budgets) {
-    final (start, end) = _period.range;
+    final (start, end) = _period.range();
 
     // Filter transactions to period
     final periodTx = allTx.where((t) {
@@ -803,36 +792,20 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
       return !d.isBefore(start) && !d.isAfter(end);
     }).toList();
 
-    final income = periodTx
-        .where((t) => t.isIncome)
-        .fold(0.0, (a, t) => a + t.amount);
-    final actualExpenses = periodTx
-        .where((t) => !t.isIncome)
-        .fold(0.0, (a, t) => a + t.amount);
-    final totalBudgeted =
-        budgets.fold(0.0, (a, b) => a + b.limitAmount);
-
-    final unassigned = income - totalBudgeted;
-    final actualLeft = income - actualExpenses;
-    final budgetVsIncomePct =
-        income > 0 ? (totalBudgeted / income * 100) : 0.0;
-    final budgetUtilPct =
-        totalBudgeted > 0 ? (actualExpenses / totalBudgeted * 100).clamp(0, 100) : 0.0;
-
-    // Category breakdown
-    final byCategory = <String, double>{};
-    for (final t in periodTx.where((t) => !t.isIncome)) {
-      byCategory[t.category] = (byCategory[t.category] ?? 0) + t.amount;
-    }
-    final sortedCats = byCategory.entries.toList()
+    final report = PlannerReportCalculator.calculate(
+      transactions: periodTx,
+      budgets: budgets,
+    );
+    final income = report.income;
+    final actualExpenses = report.actualExpenses;
+    final totalBudgeted = report.totalBudgeted;
+    final unassigned = report.unassignedCash;
+    final actualLeft = report.actualLeft;
+    final budgetVsIncomePct = report.budgetVsIncomePercent;
+    final budgetUtilPct = report.budgetUtilizationPercent;
+    final sortedCats = report.spendingByCategory.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-
-    // Budget performance per category
-    final budgetByCategory = <String, double>{};
-    for (final b in budgets) {
-      budgetByCategory[b.category] =
-          (budgetByCategory[b.category] ?? 0) + b.limitAmount;
-    }
+    final budgetByCategory = report.budgetByCategory;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
@@ -854,12 +827,12 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
               ),
               const SizedBox(height: 12),
               Row(
-                children: _Period.values.map((p) {
+                children: PlannerReportPeriod.values.map((p) {
                   final selected = p == _period;
                   return Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        _selectionHaptic(ref);
                         setState(() => _period = p);
                       },
                       child: AnimatedContainer(
@@ -882,9 +855,8 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: selected
-                                ? FontWeight.w800
-                                : FontWeight.w500,
+                            fontWeight:
+                                selected ? FontWeight.w800 : FontWeight.w500,
                             color: selected
                                 ? AppColors.tabPrimary
                                 : (widget.isDark
@@ -899,7 +871,7 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
               ),
               const SizedBox(height: 8),
               Text(
-                _period.rangeLabel,
+                _periodRangeLabel,
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
@@ -940,9 +912,8 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),
                 child: LinearProgressIndicator(
-                  value: income > 0
-                      ? (totalBudgeted / income).clamp(0.0, 1.0)
-                      : 0,
+                  value:
+                      income > 0 ? (totalBudgeted / income).clamp(0.0, 1.0) : 0,
                   minHeight: 6,
                   backgroundColor: Colors.white12,
                   valueColor: const AlwaysStoppedAnimation(AppColors.amber),
@@ -961,8 +932,7 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
               _ReportRow('Actual left',
                   Fmt.money(actualLeft, currency: widget.currency),
                   bold: true,
-                  valueColor:
-                      actualLeft >= 0 ? Colors.white : AppColors.rose),
+                  valueColor: actualLeft >= 0 ? Colors.white : AppColors.rose),
               const Divider(color: Colors.white12, height: 24),
               _ReportRow(
                 'Expense budget vs income',
@@ -995,9 +965,8 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
                   final cat = categoryByIdOrDefault(e.key);
                   final budget = budgetByCategory[e.key] ?? 0;
                   final overBudget = budget > 0 && e.value > budget;
-                  final ratio = budget > 0
-                      ? (e.value / budget).clamp(0.0, 1.0)
-                      : 0.0;
+                  final ratio =
+                      budget > 0 ? (e.value / budget).clamp(0.0, 1.0) : 0.0;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Column(
@@ -1037,8 +1006,7 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
                               ),
                             const SizedBox(width: 8),
                             Text(
-                              Fmt.compact(e.value,
-                                  currency: widget.currency),
+                              Fmt.compact(e.value, currency: widget.currency),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
@@ -1058,7 +1026,8 @@ class _ReportsTabState extends ConsumerState<_ReportsTab> {
                             child: LinearProgressIndicator(
                               value: ratio,
                               minHeight: 4,
-                              backgroundColor: cat.color.withValues(alpha: 0.15),
+                              backgroundColor:
+                                  cat.color.withValues(alpha: 0.15),
                               valueColor: AlwaysStoppedAnimation(
                                 overBudget ? AppColors.rose : cat.color,
                               ),
@@ -1109,6 +1078,10 @@ class _TCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.tabCardDark : AppColors.tabCard,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.tabBorderDark : AppColors.tabBorder,
+        ),
+        boxShadow: isDark ? null : AppShadows.card,
       ),
       child: child,
     );
@@ -1167,8 +1140,7 @@ class _TField extends StatelessWidget {
       ),
       child: TextField(
         controller: ctrl,
-        keyboardType:
-            isNumber ? TextInputType.number : TextInputType.text,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         inputFormatters: isNumber
             ? [
                 FilteringTextInputFormatter.digitsOnly,
@@ -1223,9 +1195,6 @@ class _TCategoryPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selected =
-        categories.firstWhere((c) => c.id == selectedId, orElse: () => categories.first);
-
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
@@ -1233,8 +1202,7 @@ class _TCategoryPicker extends StatelessWidget {
           color: isDark ? AppColors.tabMutedDark : AppColors.tabMuted,
           fontSize: 13,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
@@ -1264,7 +1232,9 @@ class _TCategoryPicker extends StatelessWidget {
           ),
           icon: Icon(Icons.keyboard_arrow_down_rounded,
               color: isDark ? AppColors.tabMutedDark : AppColors.tabMuted),
-          onChanged: (v) { if (v != null) onChanged(v); },
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
           selectedItemBuilder: (_) => categories
               .map((c) => Row(
                     children: [
@@ -1339,7 +1309,8 @@ class _TDateField extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? AppColors.tabMutedDark : AppColors.tabMuted,
+                      color:
+                          isDark ? AppColors.tabMutedDark : AppColors.tabMuted,
                     ),
                   ),
                   Text(
@@ -1380,7 +1351,8 @@ class _TButton extends StatelessWidget {
         onPressed: loading ? null : onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.tabPrimary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         child: loading
             ? const SizedBox(
@@ -1460,7 +1432,8 @@ class _TEntryRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(sub, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(sub,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
               ],
             ),
           ),
@@ -1512,7 +1485,8 @@ class _ReportRow extends StatelessWidget {
   final bool bold;
   final Color? valueColor;
 
-  const _ReportRow(this.label, this.value, {this.bold = false, this.valueColor});
+  const _ReportRow(this.label, this.value,
+      {this.bold = false, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
@@ -1546,7 +1520,8 @@ class _ReportRow extends StatelessWidget {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-Future<bool> _confirmDelete(BuildContext context) async {
+Future<bool> _confirmDelete(BuildContext context, WidgetRef ref) async {
+  if (!ref.read(appPreferencesProvider).confirmBeforeDelete) return true;
   return await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
@@ -1565,4 +1540,22 @@ Future<bool> _confirmDelete(BuildContext context) async {
         ),
       ) ??
       false;
+}
+
+void _selectionHaptic(WidgetRef ref) {
+  if (ref.read(appPreferencesProvider).hapticFeedback) {
+    HapticFeedback.selectionClick();
+  }
+}
+
+void _mediumHaptic(WidgetRef ref) {
+  if (ref.read(appPreferencesProvider).hapticFeedback) {
+    HapticFeedback.mediumImpact();
+  }
+}
+
+void _lightHaptic(WidgetRef ref) {
+  if (ref.read(appPreferencesProvider).hapticFeedback) {
+    HapticFeedback.lightImpact();
+  }
 }

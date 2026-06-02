@@ -26,7 +26,7 @@ class GoalsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle_rounded),
-            color: AppColors.emerald,
+            color: AppColors.primary,
             onPressed: () => _showAddGoalSheet(context, ref, userId, currency),
           ),
         ],
@@ -39,7 +39,8 @@ class GoalsScreen extends ConsumerWidget {
             return EmptyState(
               icon: Icons.savings_outlined,
               title: 'Start saving today',
-              subtitle: 'Create your first savings goal and watch your money grow.',
+              subtitle:
+                  'Create your first savings goal and watch your money grow.',
               actionLabel: 'Create Goal',
               onAction: () => _showAddGoalSheet(context, ref, userId, currency),
             );
@@ -68,30 +69,33 @@ class GoalsScreen extends ConsumerWidget {
               if (active.isNotEmpty) ...[
                 const SectionHeader(title: 'Active Goals'),
                 ...active.asMap().entries.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _GoalCard(
-                    goal: e.value,
-                    currency: currency,
-                    isDark: isDark,
-                    onDelete: () => _deleteGoal(ref, e.value.id),
-                    onAddFunds: () => _showAddFundsSheet(context, ref, e.value, currency),
-                  ).animate().fadeIn(duration: 300.ms, delay: (e.key * 60).ms),
-                )),
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _GoalCard(
+                        goal: e.value,
+                        currency: currency,
+                        isDark: isDark,
+                        onDelete: () => _deleteGoal(ref, e.value.id),
+                        onAddFunds: () =>
+                            _showAddFundsSheet(context, ref, e.value, currency),
+                      )
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: (e.key * 60).ms),
+                    )),
               ],
 
               if (completed.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 const SectionHeader(title: 'Completed 🎉'),
                 ...completed.map((g) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _GoalCard(
-                    goal: g,
-                    currency: currency,
-                    isDark: isDark,
-                    onDelete: () => _deleteGoal(ref, g.id),
-                    onAddFunds: null,
-                  ),
-                )),
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _GoalCard(
+                        goal: g,
+                        currency: currency,
+                        isDark: isDark,
+                        onDelete: () => _deleteGoal(ref, g.id),
+                        onAddFunds: null,
+                      ),
+                    )),
               ],
             ],
           );
@@ -99,9 +103,10 @@ class GoalsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddGoalSheet(context, ref, userId, currency),
-        backgroundColor: AppColors.emerald,
+        backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('New Goal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        label: const Text('New Goal',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
       ),
     );
   }
@@ -117,12 +122,16 @@ class GoalsScreen extends ConsumerWidget {
       itemCount: 4,
       itemBuilder: (_, i) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: ShimmerBox(width: double.infinity, height: 140, borderRadius: BorderRadius.circular(20)),
+        child: ShimmerBox(
+            width: double.infinity,
+            height: 140,
+            borderRadius: BorderRadius.circular(20)),
       ),
     );
   }
 
-  void _showAddGoalSheet(BuildContext context, WidgetRef ref, String userId, String currency) {
+  void _showAddGoalSheet(
+      BuildContext context, WidgetRef ref, String userId, String currency) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -130,7 +139,8 @@ class GoalsScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddFundsSheet(BuildContext context, WidgetRef ref, GoalEntry goal, String currency) {
+  void _showAddFundsSheet(
+      BuildContext context, WidgetRef ref, GoalEntry goal, String currency) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -162,11 +172,13 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Total Saved', style: TextStyle(color: Colors.white60, fontSize: 13)),
+          const Text('Total Saved',
+              style: TextStyle(color: Colors.white60, fontSize: 13)),
           const SizedBox(height: 6),
           Text(
             Fmt.money(totalSaved, currency: currency),
-            style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900),
+            style: const TextStyle(
+                color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900),
           ),
           Text(
             'of ${Fmt.money(totalTarget, currency: currency)} target',
@@ -187,7 +199,8 @@ class _SummaryCard extends StatelessWidget {
             children: [
               _Pill(label: '$activeCount Active', color: Colors.white24),
               const SizedBox(width: 8),
-              _Pill(label: '$completedCount Completed 🏆', color: Colors.white24),
+              _Pill(
+                  label: '$completedCount Completed 🏆', color: Colors.white24),
             ],
           ),
         ],
@@ -206,8 +219,11 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(999)),
-      child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+      decoration:
+          BoxDecoration(color: color, borderRadius: BorderRadius.circular(999)),
+      child: Text(label,
+          style: const TextStyle(
+              color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -231,7 +247,9 @@ class _GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ratio = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount).clamp(0.0, 1.0) : 0.0;
+    final ratio = goal.targetAmount > 0
+        ? (goal.currentAmount / goal.targetAmount).clamp(0.0, 1.0)
+        : 0.0;
     final remaining = goal.targetAmount - goal.currentAmount;
     final colorHex = goal.colorHex;
     final color = _hexColor(colorHex);
@@ -247,14 +265,23 @@ class _GoalCard extends StatelessWidget {
               children: [
                 if (onAddFunds != null)
                   ListTile(
-                    leading: const Icon(Icons.add_circle_outline_rounded, color: AppColors.emerald),
+                    leading: const Icon(Icons.add_circle_outline_rounded,
+                        color: AppColors.emerald),
                     title: const Text('Add funds'),
-                    onTap: () { Navigator.pop(context); onAddFunds!(); },
+                    onTap: () {
+                      Navigator.pop(context);
+                      onAddFunds!();
+                    },
                   ),
                 ListTile(
-                  leading: const Icon(Icons.delete_outline_rounded, color: AppColors.rose),
-                  title: const Text('Delete goal', style: TextStyle(color: AppColors.rose)),
-                  onTap: () { Navigator.pop(context); onDelete(); },
+                  leading: const Icon(Icons.delete_outline_rounded,
+                      color: AppColors.rose),
+                  title: const Text('Delete goal',
+                      style: TextStyle(color: AppColors.rose)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onDelete();
+                  },
                 ),
               ],
             ),
@@ -266,7 +293,8 @@ class _GoalCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
         child: Column(
           children: [
@@ -279,7 +307,9 @@ class _GoalCard extends StatelessWidget {
                     color: color.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Center(child: Text(goal.emoji, style: const TextStyle(fontSize: 28))),
+                  child: Center(
+                      child: Text(goal.emoji,
+                          style: const TextStyle(fontSize: 28))),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -300,26 +330,33 @@ class _GoalCard extends StatelessWidget {
                           ),
                           if (goal.isCompleted)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: AppColors.emerald.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(999),
                               ),
-                              child: const Text('Done 🎉', style: TextStyle(fontSize: 11, color: AppColors.emerald, fontWeight: FontWeight.w700)),
+                              child: const Text('Done 🎉',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.emerald,
+                                      fontWeight: FontWeight.w700)),
                             ),
                         ],
                       ),
                       if (goal.deadline != null)
                         Text(
                           'By ${Fmt.date(goal.deadline!)}',
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 11, color: Colors.grey),
                         ),
                     ],
                   ),
                 ),
                 Text(
                   '${(ratio * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color),
+                  style: TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.w900, color: color),
                 ),
               ],
             ),
@@ -341,16 +378,24 @@ class _GoalCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(Fmt.money(goal.currentAmount, currency: currency),
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color)),
-                    const Text('saved', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: color)),
+                    const Text('saved',
+                        style: TextStyle(fontSize: 11, color: Colors.grey)),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(Fmt.money(goal.targetAmount, currency: currency),
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: isDark ? Colors.white : AppColors.navy)),
-                    const Text('target', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : AppColors.navy)),
+                    const Text('target',
+                        style: TextStyle(fontSize: 11, color: Colors.grey)),
                   ],
                 ),
               ],
@@ -392,15 +437,41 @@ class _GoalCard extends StatelessWidget {
 
 // ── Goal Sheet ────────────────────────────────────────────────────────────────
 
-const _goalEmojis = ['🎯', '🏠', '✈️', '🚗', '💍', '🎓', '🏥', '🏖️', '💼', '🐷', '📱', '🎮', '🎸', '🌍', '🏋️'];
-const _goalColors = ['#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#0EA5E9', '#EC4899', '#F97316', '#14B8A6'];
+const _goalEmojis = [
+  '🎯',
+  '🏠',
+  '✈️',
+  '🚗',
+  '💍',
+  '🎓',
+  '🏥',
+  '🏖️',
+  '💼',
+  '🐷',
+  '📱',
+  '🎮',
+  '🎸',
+  '🌍',
+  '🏋️'
+];
+const _goalColors = [
+  '#10B981',
+  '#8B5CF6',
+  '#F59E0B',
+  '#EF4444',
+  '#0EA5E9',
+  '#EC4899',
+  '#F97316',
+  '#14B8A6'
+];
 
 class _GoalSheet extends StatefulWidget {
   final String userId;
   final String currency;
   final WidgetRef ref;
 
-  const _GoalSheet({required this.userId, required this.currency, required this.ref});
+  const _GoalSheet(
+      {required this.userId, required this.currency, required this.ref});
 
   @override
   State<_GoalSheet> createState() => _GoalSheetState();
@@ -459,13 +530,16 @@ class _GoalSheetState extends State<_GoalSheet> {
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 20, right: 20, top: 4,
+        left: 20,
+        right: 20,
+        top: 4,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('New Savings Goal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const Text('New Savings Goal',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 20),
 
           // Emoji picker
@@ -487,11 +561,15 @@ class _GoalSheetState extends State<_GoalSheet> {
                         : (isDark ? AppColors.darkCard : AppColors.lightBg),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _emoji == _goalEmojis[i] ? _hexColor(_colorHex) : Colors.transparent,
+                      color: _emoji == _goalEmojis[i]
+                          ? _hexColor(_colorHex)
+                          : Colors.transparent,
                       width: 2,
                     ),
                   ),
-                  child: Center(child: Text(_goalEmojis[i], style: const TextStyle(fontSize: 22))),
+                  child: Center(
+                      child: Text(_goalEmojis[i],
+                          style: const TextStyle(fontSize: 22))),
                 ),
               ),
             ),
@@ -517,10 +595,19 @@ class _GoalSheetState extends State<_GoalSheet> {
                     decoration: BoxDecoration(
                       color: c,
                       shape: BoxShape.circle,
-                      border: Border.all(color: selected ? Colors.white : Colors.transparent, width: 3),
-                      boxShadow: selected ? [BoxShadow(color: c.withOpacity(0.5), blurRadius: 6)] : [],
+                      border: Border.all(
+                          color: selected ? Colors.white : Colors.transparent,
+                          width: 3),
+                      boxShadow: selected
+                          ? [
+                              BoxShadow(
+                                  color: c.withOpacity(0.5), blurRadius: 6)
+                            ]
+                          : [],
                     ),
-                    child: selected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+                    child: selected
+                        ? const Icon(Icons.check, size: 14, color: Colors.white)
+                        : null,
                   ),
                 );
               },
@@ -530,7 +617,8 @@ class _GoalSheetState extends State<_GoalSheet> {
 
           TextField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'Goal name', hintText: 'e.g. Emergency Fund'),
+            decoration: const InputDecoration(
+                labelText: 'Goal name', hintText: 'e.g. Emergency Fund'),
             textCapitalization: TextCapitalization.words,
           ),
           const SizedBox(height: 12),
@@ -552,7 +640,9 @@ class _GoalSheetState extends State<_GoalSheet> {
           OutlinedButton.icon(
             onPressed: _pickDeadline,
             icon: const Icon(Icons.calendar_today_outlined, size: 16),
-            label: Text(_deadline != null ? 'Deadline: ${Fmt.date(_deadline!)}' : 'Set deadline (optional)'),
+            label: Text(_deadline != null
+                ? 'Deadline: ${Fmt.date(_deadline!)}'
+                : 'Set deadline (optional)'),
           ),
           const SizedBox(height: 20),
 
@@ -563,8 +653,14 @@ class _GoalSheetState extends State<_GoalSheet> {
               minimumSize: const Size.fromHeight(52),
             ),
             child: _saving
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Create Goal', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Text('Create Goal',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           ),
           const SizedBox(height: 24),
         ],
@@ -588,7 +684,8 @@ class _AddFundsSheet extends StatefulWidget {
   final String currency;
   final WidgetRef ref;
 
-  const _AddFundsSheet({required this.goal, required this.currency, required this.ref});
+  const _AddFundsSheet(
+      {required this.goal, required this.currency, required this.ref});
 
   @override
   State<_AddFundsSheet> createState() => _AddFundsSheetState();
@@ -633,7 +730,8 @@ class _AddFundsSheetState extends State<_AddFundsSheet> {
 
   Color _goalColor() {
     try {
-      return Color(int.parse('FF${widget.goal.colorHex.replaceAll('#', '')}', radix: 16));
+      return Color(int.parse('FF${widget.goal.colorHex.replaceAll('#', '')}',
+          radix: 16));
     } catch (_) {
       return AppColors.emerald;
     }
@@ -654,7 +752,9 @@ class _AddFundsSheetState extends State<_AddFundsSheet> {
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 20, right: 20, top: 4,
+        left: 20,
+        right: 20,
+        top: 4,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -670,7 +770,8 @@ class _AddFundsSheetState extends State<_AddFundsSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(goal.name,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800)),
                     Text(
                       '${Fmt.money(current, currency: widget.currency)} saved of ${Fmt.money(target, currency: widget.currency)}',
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -716,7 +817,8 @@ class _AddFundsSheetState extends State<_AddFundsSheet> {
             children: [
               Text(
                 Fmt.money(current, currency: widget.currency),
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),
+                style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w700, color: color),
               ),
               Text(
                 _enteredAmount > 0
@@ -753,34 +855,35 @@ class _AddFundsSheetState extends State<_AddFundsSheet> {
               runSpacing: 8,
               children: [
                 ..._quickAmounts.map((v) => GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    _setAmount(v);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _enteredAmount == v
-                          ? color
-                          : color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: _enteredAmount == v
-                            ? color
-                            : color.withValues(alpha: 0.3),
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        _setAmount(v);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _enteredAmount == v
+                              ? color
+                              : color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: _enteredAmount == v
+                                ? color
+                                : color.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          Fmt.compact(v, currency: widget.currency),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: _enteredAmount == v ? Colors.white : color,
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      Fmt.compact(v, currency: widget.currency),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: _enteredAmount == v ? Colors.white : color,
-                      ),
-                    ),
-                  ),
-                )),
+                    )),
                 // "Full remaining" chip
                 if (remaining > 0)
                   GestureDetector(
@@ -790,14 +893,17 @@ class _AddFundsSheetState extends State<_AddFundsSheet> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: _enteredAmount == remaining
                             ? AppColors.navy
                             : (isDark ? AppColors.darkCard : AppColors.lightBg),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                         ),
                       ),
                       child: Text(
@@ -847,13 +953,15 @@ class _AddFundsSheetState extends State<_AddFundsSheet> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   )
                 : Text(
                     _enteredAmount > 0
                         ? 'Add ${Fmt.compact(_enteredAmount, currency: widget.currency)} to goal'
                         : 'Add Savings',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 16),
                   ),
           ),
           const SizedBox(height: 24),

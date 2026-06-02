@@ -87,7 +87,7 @@ class PremiumService {
       }
       if (pkg == null) return null;
 
-      final info = await Purchases.purchasePackage(pkg);
+      await Purchases.purchasePackage(pkg);
       return await fetchStatus();
     } catch (e) {
       if (kDebugMode) debugPrint('[PremiumService] purchase error: $e');

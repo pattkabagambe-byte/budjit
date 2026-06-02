@@ -78,7 +78,8 @@ class SubscriptionEntries extends Table {
   RealColumn get amount => real()();
   TextColumn get period => text().withDefault(const Constant('monthly'))();
   DateTimeColumn get nextDate => dateTime()();
-  TextColumn get category => text().withDefault(const Constant('subscriptions'))();
+  TextColumn get category =>
+      text().withDefault(const Constant('subscriptions'))();
   TextColumn get emoji => text().withDefault(const Constant('📱'))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
 
@@ -88,9 +89,16 @@ class SubscriptionEntries extends Table {
 
 // ── Database ────────────────────────────────────────────────────────────────
 
-@DriftDatabase(tables: [Transactions, Budgets, SavingsGoals, SubscriptionEntries, CustomCategories])
+@DriftDatabase(tables: [
+  Transactions,
+  Budgets,
+  SavingsGoals,
+  SubscriptionEntries,
+  CustomCategories
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
   int get schemaVersion => 3;
@@ -119,12 +127,16 @@ class AppDatabase extends _$AppDatabase {
                 t.userId.equals(userId) &
                 t.date.isBiggerOrEqualValue(start) &
                 t.date.isSmallerThanValue(end))
-            ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)]))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)
+            ]))
           .get();
     }
     return (select(transactions)
           ..where((t) => t.userId.equals(userId))
-          ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)]))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)
+          ]))
         .get();
   }
 
@@ -137,12 +149,16 @@ class AppDatabase extends _$AppDatabase {
                 t.userId.equals(userId) &
                 t.date.isBiggerOrEqualValue(start) &
                 t.date.isSmallerThanValue(end))
-            ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)]))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)
+            ]))
           .watch();
     }
     return (select(transactions)
           ..where((t) => t.userId.equals(userId))
-          ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)]))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)
+          ]))
         .watch();
   }
 
@@ -168,11 +184,12 @@ class AppDatabase extends _$AppDatabase {
 
   // ── Goals ───────────────────────────────────────────────────────────────
 
-  Stream<List<GoalEntry>> watchGoals(String userId) =>
-      (select(savingsGoals)
-            ..where((g) => g.userId.equals(userId))
-            ..orderBy([(g) => OrderingTerm(expression: g.createdAt, mode: OrderingMode.desc)]))
-          .watch();
+  Stream<List<GoalEntry>> watchGoals(String userId) => (select(savingsGoals)
+        ..where((g) => g.userId.equals(userId))
+        ..orderBy([
+          (g) => OrderingTerm(expression: g.createdAt, mode: OrderingMode.desc)
+        ]))
+      .watch();
 
   Future<void> upsertGoal(GoalEntry goal) =>
       into(savingsGoals).insertOnConflictUpdate(goal);
@@ -181,7 +198,8 @@ class AppDatabase extends _$AppDatabase {
       (delete(savingsGoals)..where((g) => g.id.equals(id))).go();
 
   Future<void> addToGoal(String id, double additionalAmount) async {
-    final goal = await (select(savingsGoals)..where((g) => g.id.equals(id))).getSingle();
+    final goal =
+        await (select(savingsGoals)..where((g) => g.id.equals(id))).getSingle();
     final newAmount = goal.currentAmount + additionalAmount;
     await (update(savingsGoals)..where((g) => g.id.equals(id))).write(
       SavingsGoalsCompanion(
@@ -194,7 +212,8 @@ class AppDatabase extends _$AppDatabase {
   // ── Subscriptions ────────────────────────────────────────────────────────
 
   Stream<List<SubEntry>> watchSubscriptions(String userId) =>
-      (select(subscriptionEntries)..where((s) => s.userId.equals(userId))).watch();
+      (select(subscriptionEntries)..where((s) => s.userId.equals(userId)))
+          .watch();
 
   Future<void> upsertSubscription(SubEntry sub) =>
       into(subscriptionEntries).insertOnConflictUpdate(sub);

@@ -7,6 +7,7 @@ import '../../features/budgets/presentation/screens/budgets_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/goals/presentation/screens/goals_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../providers/app_preferences_provider.dart';
 
 final _tabProvider = StateProvider<int>((ref) => 0);
 
@@ -62,7 +63,9 @@ class AppShell extends ConsumerWidget {
         bottomNavigationBar: NavigationBar(
           selectedIndex: tab,
           onDestinationSelected: (i) {
-            HapticFeedback.selectionClick();
+            if (ref.read(appPreferencesProvider).hapticFeedback) {
+              HapticFeedback.selectionClick();
+            }
             ref.read(_tabProvider.notifier).state = i;
           },
           destinations: _destinations,

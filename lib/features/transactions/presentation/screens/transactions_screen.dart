@@ -41,7 +41,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     final filter = ref.watch(_filterProvider);
     final search = ref.watch(_searchProvider);
     final currency = ref.watch(currencyProvider);
-    final txAsync = ref.watch(transactionsStreamProvider((userId: userId, month: month)));
+    final txAsync =
+        ref.watch(transactionsStreamProvider((userId: userId, month: month)));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -50,7 +51,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle_rounded),
-            color: AppColors.emerald,
+            color: AppColors.primary,
             onPressed: () => showAddTransactionSheet(context),
           ),
         ],
@@ -66,12 +67,14 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.chevron_left_rounded),
-                      onPressed: () => ref.read(selectedMonthProvider.notifier).state =
-                          DateTime(month.year, month.month - 1),
+                      onPressed: () => ref
+                          .read(selectedMonthProvider.notifier)
+                          .state = DateTime(month.year, month.month - 1),
                     ),
                     Text(
                       Fmt.month(month),
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 15),
                     ),
                     IconButton(
                       icon: const Icon(Icons.chevron_right_rounded),
@@ -90,26 +93,44 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Row(
                   children: [
-                    _FilterChip(label: 'All', filter: _Filter.all, current: filter, ref: ref),
+                    _FilterChip(
+                        label: 'All',
+                        filter: _Filter.all,
+                        current: filter,
+                        ref: ref),
                     const SizedBox(width: 8),
-                    _FilterChip(label: 'Income', filter: _Filter.income, current: filter, ref: ref),
+                    _FilterChip(
+                        label: 'Income',
+                        filter: _Filter.income,
+                        current: filter,
+                        ref: ref),
                     const SizedBox(width: 8),
-                    _FilterChip(label: 'Expense', filter: _Filter.expense, current: filter, ref: ref),
+                    _FilterChip(
+                        label: 'Expense',
+                        filter: _Filter.expense,
+                        current: filter,
+                        ref: ref),
                     const Spacer(),
                     txAsync.whenOrNull(
-                      data: (txs) {
-                        final filtered = _applyFilter(txs, filter, search);
-                        final total = filtered.fold(0.0, (a, t) => a + (t.isIncome ? t.amount : -t.amount));
-                        return Text(
-                          Fmt.compact(total.abs(), currency: currency),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: total >= 0 ? AppColors.emerald : AppColors.rose,
-                          ),
-                        );
-                      },
-                    ) ?? const SizedBox(),
+                          data: (txs) {
+                            final filtered = _applyFilter(txs, filter, search);
+                            final total = filtered.fold(
+                                0.0,
+                                (a, t) =>
+                                    a + (t.isIncome ? t.amount : -t.amount));
+                            return Text(
+                              Fmt.compact(total.abs(), currency: currency),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: total >= 0
+                                    ? AppColors.emerald
+                                    : AppColors.rose,
+                              ),
+                            );
+                          },
+                        ) ??
+                        const SizedBox(),
                   ],
                 ),
               ),
@@ -147,7 +168,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
             itemCount: groups.length,
             itemBuilder: (_, gi) {
               final group = groups[gi];
-              final dayTotal = group.value.fold(0.0, (a, t) => a + (t.isIncome ? t.amount : -t.amount));
+              final dayTotal = group.value
+                  .fold(0.0, (a, t) => a + (t.isIncome ? t.amount : -t.amount));
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -169,21 +191,25 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: dayTotal >= 0 ? AppColors.emerald : AppColors.rose,
+                            color: dayTotal >= 0
+                                ? AppColors.emerald
+                                : AppColors.rose,
                           ),
                         ),
                       ],
                     ),
                   ),
                   ...group.value.asMap().entries.map((e) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _TxCard(
-                      entry: e.value,
-                      currency: currency,
-                      isDark: isDark,
-                      onDelete: () => _delete(e.value.id),
-                    ),
-                  ).animate().fadeIn(duration: 300.ms, delay: (e.key * 30).ms)),
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _TxCard(
+                          entry: e.value,
+                          currency: currency,
+                          isDark: isDark,
+                          onDelete: () => _delete(e.value.id),
+                        ),
+                      )
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: (e.key * 30).ms)),
                 ],
               );
             },
@@ -194,7 +220,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         onPressed: () => showAddTransactionSheet(context),
         backgroundColor: AppTheme.accent,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        label: const Text('Add',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
       ),
     );
   }
@@ -211,10 +238,14 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
   List<TxEntry> _applyFilter(List<TxEntry> txs, _Filter filter, String search) {
     var result = txs;
-    if (filter == _Filter.income) result = result.where((t) => t.isIncome).toList();
-    if (filter == _Filter.expense) result = result.where((t) => !t.isIncome).toList();
+    if (filter == _Filter.income)
+      result = result.where((t) => t.isIncome).toList();
+    if (filter == _Filter.expense)
+      result = result.where((t) => !t.isIncome).toList();
     if (search.isNotEmpty) {
-      result = result.where((t) => t.title.toLowerCase().contains(search.toLowerCase())).toList();
+      result = result
+          .where((t) => t.title.toLowerCase().contains(search.toLowerCase()))
+          .toList();
     }
     return result;
   }
@@ -230,7 +261,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       itemCount: 8,
       itemBuilder: (_, i) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: ShimmerBox(width: double.infinity, height: 68, borderRadius: BorderRadius.circular(16)),
+        child: ShimmerBox(
+            width: double.infinity,
+            height: 68,
+            borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -242,7 +276,11 @@ class _FilterChip extends StatelessWidget {
   final _Filter current;
   final WidgetRef ref;
 
-  const _FilterChip({required this.label, required this.filter, required this.current, required this.ref});
+  const _FilterChip(
+      {required this.label,
+      required this.filter,
+      required this.current,
+      required this.ref});
 
   @override
   Widget build(BuildContext context) {
@@ -259,7 +297,11 @@ class _FilterChip extends StatelessWidget {
           color: selected ? AppColors.navy : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? AppColors.navy : (Theme.of(context).brightness == Brightness.dark ? AppColors.darkBorder : AppColors.lightBorder),
+            color: selected
+                ? AppColors.navy
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkBorder
+                    : AppColors.lightBorder),
           ),
         ),
         child: Text(
@@ -281,7 +323,11 @@ class _TxCard extends StatelessWidget {
   final bool isDark;
   final VoidCallback onDelete;
 
-  const _TxCard({required this.entry, required this.currency, required this.isDark, required this.onDelete});
+  const _TxCard(
+      {required this.entry,
+      required this.currency,
+      required this.isDark,
+      required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -302,20 +348,24 @@ class _TxCard extends StatelessWidget {
       ),
       confirmDismiss: (_) async {
         return await showDialog<bool>(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Delete transaction?'),
-            content: Text('Remove "${entry.title}" from your records?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: FilledButton.styleFrom(backgroundColor: AppColors.rose),
-                child: const Text('Delete'),
+              context: context,
+              builder: (_) => AlertDialog(
+                title: const Text('Delete transaction?'),
+                content: Text('Remove "${entry.title}" from your records?'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel')),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style:
+                        FilledButton.styleFrom(backgroundColor: AppColors.rose),
+                    child: const Text('Delete'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ) ?? false;
+            ) ??
+            false;
       },
       onDismissed: (_) => onDelete(),
       child: Container(
@@ -323,11 +373,13 @@ class _TxCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
         child: Row(
           children: [
-            CategoryBadge(category: cat.id, emoji: cat.emoji, color: cat.color, size: 44),
+            CategoryBadge(
+                category: cat.id, emoji: cat.emoji, color: cat.color, size: 44),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -346,13 +398,17 @@ class _TxCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Text(cat.label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      Text(cat.label,
+                          style: const TextStyle(
+                              fontSize: 11, color: Colors.grey)),
                       if (entry.note != null) ...[
-                        const Text(' · ', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        const Text(' · ',
+                            style: TextStyle(fontSize: 11, color: Colors.grey)),
                         Flexible(
                           child: Text(
                             entry.note!,
-                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.grey),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -368,9 +424,13 @@ class _TxCard extends StatelessWidget {
               children: [
                 Text(
                   '${entry.isIncome ? '+' : '-'}${Fmt.compact(entry.amount, currency: currency)}',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: amtColor),
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: amtColor),
                 ),
-                Text(Fmt.dateShort(entry.date), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                Text(Fmt.dateShort(entry.date),
+                    style: const TextStyle(fontSize: 10, color: Colors.grey)),
               ],
             ),
           ],
