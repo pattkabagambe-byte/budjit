@@ -657,7 +657,11 @@ class _PlannedExpenseSubTabState extends ConsumerState<_PlannedExpenseSubTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _TCardTitle('Planned expense budget', widget.isDark),
+                _TCardTitle(
+                  'Plan your expenses',
+                  widget.isDark,
+                  subtitle: 'Set a monthly amount for each spending category.',
+                ),
                 const SizedBox(height: 16),
                 _TField(
                   ctrl: _labelCtrl,
@@ -709,7 +713,10 @@ class _PlannedExpenseSubTabState extends ConsumerState<_PlannedExpenseSubTab> {
                       widget.isDark),
                   const SizedBox(height: 8),
                   if (budgets.isEmpty)
-                    _TEmptyState('No planned expenses yet')
+                    _TEmptyState(
+                      'No planned expenses yet',
+                      icon: Icons.playlist_add_rounded,
+                    )
                   else
                     ...budgets.map((b) => _TEntryRow(
                           id: b.id,
@@ -1099,18 +1106,35 @@ class _TCard extends StatelessWidget {
 class _TCardTitle extends StatelessWidget {
   final String text;
   final bool isDark;
+  final String? subtitle;
 
-  const _TCardTitle(this.text, this.isDark);
+  const _TCardTitle(this.text, this.isDark, {this.subtitle});
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w900,
-        color: isDark ? Colors.white : AppColors.navy,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white : AppColors.navy,
+          ),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 5),
+          Text(
+            subtitle!,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: isDark ? AppColors.tabMutedDark : AppColors.tabMuted,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -1203,72 +1227,86 @@ class _TCategoryPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(
-          color: isDark ? AppColors.tabMutedDark : AppColors.tabMuted,
-          fontSize: 13,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        border: OutlineInputBorder(
+    final muted = isDark ? AppColors.tabMutedDark : AppColors.tabMuted;
+    return Semantics(
+      label: label,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 12, 8),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.tabBgDark.withValues(alpha: 0.6)
+              : AppColors.lightBg,
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
+          border: Border.all(
             color: isDark ? AppColors.tabBorderDark : AppColors.tabBorder,
           ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: isDark ? AppColors.tabBorderDark : AppColors.tabBorder,
-          ),
-        ),
-        filled: true,
-        fillColor: isDark
-            ? AppColors.tabBgDark.withValues(alpha: 0.6)
-            : AppColors.lightBg,
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: selectedId,
-          isExpanded: true,
-          dropdownColor: isDark ? AppColors.tabCardDark : Colors.white,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : AppColors.navy,
-          ),
-          icon: Icon(Icons.keyboard_arrow_down_rounded,
-              color: isDark ? AppColors.tabMutedDark : AppColors.tabMuted),
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
-          selectedItemBuilder: (_) => categories
-              .map((c) => Row(
-                    children: [
-                      Text(c.emoji, style: const TextStyle(fontSize: 18)),
-                      const SizedBox(width: 8),
-                      Text(c.label,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : AppColors.navy,
-                          )),
-                    ],
-                  ))
-              .toList(),
-          items: categories
-              .map((c) => DropdownMenuItem(
-                    value: c.id,
-                    child: Row(
-                      children: [
-                        Text(c.emoji, style: const TextStyle(fontSize: 18)),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(c.label)),
-                      ],
-                    ),
-                  ))
-              .toList(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                color: muted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.7,
+              ),
+            ),
+            const SizedBox(height: 2),
+            DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedId,
+                isExpanded: true,
+                isDense: true,
+                dropdownColor: isDark ? AppColors.tabCardDark : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : AppColors.navy,
+                ),
+                icon: Icon(Icons.keyboard_arrow_down_rounded, color: muted),
+                onChanged: (v) {
+                  if (v != null) onChanged(v);
+                },
+                selectedItemBuilder: (_) => categories
+                    .map((c) => Row(
+                          children: [
+                            Text(c.emoji, style: const TextStyle(fontSize: 18)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                c.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color:
+                                      isDark ? Colors.white : AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ))
+                    .toList(),
+                items: categories
+                    .map((c) => DropdownMenuItem(
+                          value: c.id,
+                          child: Row(
+                            children: [
+                              Text(c.emoji,
+                                  style: const TextStyle(fontSize: 18)),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text(c.label)),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1470,17 +1508,35 @@ class _TEntryRow extends StatelessWidget {
 
 class _TEmptyState extends StatelessWidget {
   final String message;
-  const _TEmptyState(this.message);
+  final IconData? icon;
+
+  const _TEmptyState(this.message, {this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Center(
-        child: Text(
-          message,
-          style: const TextStyle(color: Colors.grey, fontSize: 13),
-          textAlign: TextAlign.center,
+        child: Column(
+          children: [
+            if (icon != null) ...[
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 21),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Text(
+              message,
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
