@@ -11,6 +11,7 @@ import '../../../../core/models/app_preferences.dart';
 import '../../../../core/models/layout_mode.dart';
 import '../../../../core/providers/app_preferences_provider.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/providers/layout_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/formatters.dart';
@@ -74,6 +75,12 @@ class _TabbedBudgetPlannerViewState
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.swap_horiz_rounded, color: _primary),
+            tooltip: 'Switch to Default Mode',
+            onPressed: () => _switchToDefaultMode(context),
+          ),
+          const SizedBox(width: 2),
           Tooltip(
             message: 'Budget Planner menu',
             child: Semantics(
@@ -134,6 +141,16 @@ class _TabbedBudgetPlannerViewState
         ],
       ),
     );
+  }
+
+  Future<void> _switchToDefaultMode(BuildContext context) async {
+    _selectionHaptic(ref);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Switched to Default Mode')),
+    );
+    await ref
+        .read(layoutModeProvider.notifier)
+        .switchMode(LayoutMode.defaultMode);
   }
 }
 
