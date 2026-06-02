@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/models/layout_mode.dart';
 import '../../../../core/providers/category_providers.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/providers/layout_provider.dart';
 import '../../../../core/services/premium_service.dart';
 import '../../../../core/review/review_service.dart';
 import '../../../../core/support/support_sheet.dart';
@@ -27,6 +29,7 @@ class SettingsScreen extends ConsumerWidget {
     final isPremium = ref.watch(isPremiumProvider);
     final planTier = ref.watch(planTierProvider);
     final currency = ref.watch(currencyProvider);
+    final layoutMode = ref.watch(layoutModeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -87,6 +90,54 @@ class SettingsScreen extends ConsumerWidget {
                           onTap: () => _signOut(context),
                         ),
                       ],
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Layout
+                  _SettingsSection(
+                    title: 'Budget Planner Layout',
+                    isDark: isDark,
+                    items: [
+                      InfoTile(
+                        icon: Icons.view_agenda_rounded,
+                        title: 'Default Mode',
+                        subtitle: 'Dashboard with bottom navigation',
+                        iconColor: AppColors.navy,
+                        onTap: () async {
+                          await ref.read(layoutModeProvider.notifier)
+                              .setMode(LayoutMode.defaultMode);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Default Mode set')),
+                            );
+                          }
+                        },
+                        trailing: layoutMode == LayoutMode.defaultMode
+                            ? const Icon(Icons.check_circle_rounded,
+                                color: AppColors.emerald, size: 20)
+                            : null,
+                      ),
+                      InfoTile(
+                        icon: Icons.tab_rounded,
+                        title: 'Tabbed Mode',
+                        subtitle: 'Actual · Budget · Reports planner',
+                        iconColor: const Color(0xFF8B3030),
+                        onTap: () async {
+                          await ref.read(layoutModeProvider.notifier)
+                              .setMode(LayoutMode.tabbedMode);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Tabbed Mode set — restarting layout')),
+                            );
+                          }
+                        },
+                        trailing: layoutMode == LayoutMode.tabbedMode
+                            ? const Icon(Icons.check_circle_rounded,
+                                color: AppColors.emerald, size: 20)
+                            : null,
+                      ),
                     ],
                   ),
 

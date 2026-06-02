@@ -519,6 +519,11 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
   late final GeneratedColumn<String> userId = GeneratedColumn<String>(
       'user_id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+      'label', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _categoryMeta =
       const VerificationMeta('category');
   @override
@@ -546,7 +551,7 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, userId, category, limitAmount, period, createdAt];
+      [id, userId, label, category, limitAmount, period, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -567,6 +572,10 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
           userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
     } else if (isInserting) {
       context.missing(_userIdMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+          _labelMeta, label.isAcceptableOrUnknown(data['label']!, _labelMeta));
     }
     if (data.containsKey('category')) {
       context.handle(_categoryMeta,
@@ -605,6 +614,8 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       userId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+      label: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label']),
       category: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
       limitAmount: attachedDatabase.typeMapping
@@ -625,6 +636,7 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
 class Budget extends DataClass implements Insertable<Budget> {
   final String id;
   final String userId;
+  final String? label;
   final String category;
   final double limitAmount;
   final String period;
@@ -632,6 +644,7 @@ class Budget extends DataClass implements Insertable<Budget> {
   const Budget(
       {required this.id,
       required this.userId,
+      this.label,
       required this.category,
       required this.limitAmount,
       required this.period,
@@ -641,6 +654,9 @@ class Budget extends DataClass implements Insertable<Budget> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || label != null) {
+      map['label'] = Variable<String>(label);
+    }
     map['category'] = Variable<String>(category);
     map['limit_amount'] = Variable<double>(limitAmount);
     map['period'] = Variable<String>(period);
@@ -652,6 +668,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     return BudgetsCompanion(
       id: Value(id),
       userId: Value(userId),
+      label:
+          label == null && nullToAbsent ? const Value.absent() : Value(label),
       category: Value(category),
       limitAmount: Value(limitAmount),
       period: Value(period),
@@ -665,6 +683,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     return Budget(
       id: serializer.fromJson<String>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
+      label: serializer.fromJson<String?>(json['label']),
       category: serializer.fromJson<String>(json['category']),
       limitAmount: serializer.fromJson<double>(json['limitAmount']),
       period: serializer.fromJson<String>(json['period']),
@@ -677,6 +696,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'userId': serializer.toJson<String>(userId),
+      'label': serializer.toJson<String?>(label),
       'category': serializer.toJson<String>(category),
       'limitAmount': serializer.toJson<double>(limitAmount),
       'period': serializer.toJson<String>(period),
@@ -687,6 +707,7 @@ class Budget extends DataClass implements Insertable<Budget> {
   Budget copyWith(
           {String? id,
           String? userId,
+          Value<String?> label = const Value.absent(),
           String? category,
           double? limitAmount,
           String? period,
@@ -694,6 +715,7 @@ class Budget extends DataClass implements Insertable<Budget> {
       Budget(
         id: id ?? this.id,
         userId: userId ?? this.userId,
+        label: label.present ? label.value : this.label,
         category: category ?? this.category,
         limitAmount: limitAmount ?? this.limitAmount,
         period: period ?? this.period,
@@ -703,6 +725,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     return Budget(
       id: data.id.present ? data.id.value : this.id,
       userId: data.userId.present ? data.userId.value : this.userId,
+      label: data.label.present ? data.label.value : this.label,
       category: data.category.present ? data.category.value : this.category,
       limitAmount:
           data.limitAmount.present ? data.limitAmount.value : this.limitAmount,
@@ -716,6 +739,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     return (StringBuffer('Budget(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
+          ..write('label: $label, ')
           ..write('category: $category, ')
           ..write('limitAmount: $limitAmount, ')
           ..write('period: $period, ')
@@ -726,13 +750,14 @@ class Budget extends DataClass implements Insertable<Budget> {
 
   @override
   int get hashCode =>
-      Object.hash(id, userId, category, limitAmount, period, createdAt);
+      Object.hash(id, userId, label, category, limitAmount, period, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Budget &&
           other.id == this.id &&
           other.userId == this.userId &&
+          other.label == this.label &&
           other.category == this.category &&
           other.limitAmount == this.limitAmount &&
           other.period == this.period &&
@@ -742,6 +767,7 @@ class Budget extends DataClass implements Insertable<Budget> {
 class BudgetsCompanion extends UpdateCompanion<Budget> {
   final Value<String> id;
   final Value<String> userId;
+  final Value<String?> label;
   final Value<String> category;
   final Value<double> limitAmount;
   final Value<String> period;
@@ -750,6 +776,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
   const BudgetsCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
+    this.label = const Value.absent(),
     this.category = const Value.absent(),
     this.limitAmount = const Value.absent(),
     this.period = const Value.absent(),
@@ -759,6 +786,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
   BudgetsCompanion.insert({
     required String id,
     required String userId,
+    this.label = const Value.absent(),
     required String category,
     required double limitAmount,
     this.period = const Value.absent(),
@@ -772,6 +800,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
   static Insertable<Budget> custom({
     Expression<String>? id,
     Expression<String>? userId,
+    Expression<String>? label,
     Expression<String>? category,
     Expression<double>? limitAmount,
     Expression<String>? period,
@@ -781,6 +810,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
+      if (label != null) 'label': label,
       if (category != null) 'category': category,
       if (limitAmount != null) 'limit_amount': limitAmount,
       if (period != null) 'period': period,
@@ -792,6 +822,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
   BudgetsCompanion copyWith(
       {Value<String>? id,
       Value<String>? userId,
+      Value<String?>? label,
       Value<String>? category,
       Value<double>? limitAmount,
       Value<String>? period,
@@ -800,6 +831,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     return BudgetsCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      label: label ?? this.label,
       category: category ?? this.category,
       limitAmount: limitAmount ?? this.limitAmount,
       period: period ?? this.period,
@@ -816,6 +848,9 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     }
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
     }
     if (category.present) {
       map['category'] = Variable<String>(category.value);
@@ -840,6 +875,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     return (StringBuffer('BudgetsCompanion(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
+          ..write('label: $label, ')
           ..write('category: $category, ')
           ..write('limitAmount: $limitAmount, ')
           ..write('period: $period, ')
@@ -2463,6 +2499,7 @@ typedef $$TransactionsTableProcessedTableManager = ProcessedTableManager<
 typedef $$BudgetsTableCreateCompanionBuilder = BudgetsCompanion Function({
   required String id,
   required String userId,
+  Value<String?> label,
   required String category,
   required double limitAmount,
   Value<String> period,
@@ -2472,6 +2509,7 @@ typedef $$BudgetsTableCreateCompanionBuilder = BudgetsCompanion Function({
 typedef $$BudgetsTableUpdateCompanionBuilder = BudgetsCompanion Function({
   Value<String> id,
   Value<String> userId,
+  Value<String?> label,
   Value<String> category,
   Value<double> limitAmount,
   Value<String> period,
@@ -2493,6 +2531,9 @@ class $$BudgetsTableFilterComposer
 
   ColumnFilters<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get category => $composableBuilder(
       column: $table.category, builder: (column) => ColumnFilters(column));
@@ -2522,6 +2563,9 @@ class $$BudgetsTableOrderingComposer
   ColumnOrderings<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get category => $composableBuilder(
       column: $table.category, builder: (column) => ColumnOrderings(column));
 
@@ -2549,6 +2593,9 @@ class $$BudgetsTableAnnotationComposer
 
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
 
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
@@ -2588,6 +2635,7 @@ class $$BudgetsTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
             Value<String> userId = const Value.absent(),
+            Value<String?> label = const Value.absent(),
             Value<String> category = const Value.absent(),
             Value<double> limitAmount = const Value.absent(),
             Value<String> period = const Value.absent(),
@@ -2597,6 +2645,7 @@ class $$BudgetsTableTableManager extends RootTableManager<
               BudgetsCompanion(
             id: id,
             userId: userId,
+            label: label,
             category: category,
             limitAmount: limitAmount,
             period: period,
@@ -2606,6 +2655,7 @@ class $$BudgetsTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             required String id,
             required String userId,
+            Value<String?> label = const Value.absent(),
             required String category,
             required double limitAmount,
             Value<String> period = const Value.absent(),
@@ -2615,6 +2665,7 @@ class $$BudgetsTableTableManager extends RootTableManager<
               BudgetsCompanion.insert(
             id: id,
             userId: userId,
+            label: label,
             category: category,
             limitAmount: limitAmount,
             period: period,

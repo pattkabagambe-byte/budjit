@@ -9,10 +9,13 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/ads/ad_manager.dart';
+import 'core/models/layout_mode.dart';
 import 'core/navigation/app_shell.dart';
 import 'core/providers/core_providers.dart';
+import 'core/providers/layout_provider.dart';
 import 'core/services/premium_service.dart';
 import 'core/theme/app_theme.dart';
+import 'features/budget_planner/presentation/screens/tabbed_budget_planner_view.dart';
 import 'features/auth/presentation/screens/auth_screen.dart';
 import 'features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'firebase_options.dart';
@@ -119,11 +122,17 @@ class _OnboardingGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final onboardingAsync = ref.watch(onboardingCompleteProvider);
+    final layoutMode = ref.watch(layoutModeProvider);
 
     return onboardingAsync.when(
       loading: () => const _Splash(),
       error: (_, __) => const AppShell(),
-      data: (complete) => complete ? const AppShell() : const OnboardingScreen(),
+      data: (complete) {
+        if (!complete) return const OnboardingScreen();
+        return layoutMode == LayoutMode.tabbedMode
+            ? const TabbedBudgetPlannerView()
+            : const AppShell();
+      },
     );
   }
 }

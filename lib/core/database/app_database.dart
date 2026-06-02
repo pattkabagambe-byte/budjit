@@ -29,6 +29,7 @@ class Transactions extends Table {
 class Budgets extends Table {
   TextColumn get id => text()();
   TextColumn get userId => text()();
+  TextColumn get label => text().nullable()();
   TextColumn get category => text()();
   RealColumn get limitAmount => real()();
   TextColumn get period => text().withDefault(const Constant('monthly'))();
@@ -92,7 +93,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -100,6 +101,9 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.createTable(customCategories);
+          }
+          if (from < 3) {
+            await m.addColumn(budgets, budgets.label);
           }
         },
       );

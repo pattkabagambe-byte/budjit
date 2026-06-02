@@ -77,6 +77,19 @@ class AppColors {
     colors: [Color(0xFFDC2626), rose],
   );
 
+  // ── Tabbed Mode palette ───────────────────────────────────────────────────
+  static const tabBg = Color(0xFFF5EDE0);
+  static const tabBgDark = Color(0xFF1A0E08);
+  static const tabPrimary = Color(0xFF8B3030);
+  static const tabPrimaryLight = Color(0xFFB04848);
+  static const tabCard = Colors.white;
+  static const tabCardDark = Color(0xFF2A1810);
+  static const tabBorder = Color(0xFFE8D8C4);
+  static const tabBorderDark = Color(0xFF3A2E20);
+  static const tabMuted = Color(0xFF7A6A5A);
+  static const tabMutedDark = Color(0xFF9A8A7A);
+  static const tabDarkSurface = Color(0xFF1C1A18);
+
   static Color categoryColor(String category) {
     return switch (category.toLowerCase()) {
       'food' || 'food & dining' => catFood,
