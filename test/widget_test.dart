@@ -19,14 +19,19 @@ void main() {
 
   group('premium theme', () {
     test('uses the tabbed burgundy and cream direction app-wide', () {
-      expect(AppColors.primary, const Color(0xFF7D2935));
-      expect(AppColors.background, const Color(0xFFF8F1E7));
+      expect(AppColors.primary, const Color(0xFF8A2638));
+      expect(AppColors.background, const Color(0xFFFAF4EA));
+      expect(AppColors.card, const Color(0xFFFFF9F2));
+      expect(AppColors.blush, const Color(0xFFE9D7D9));
+      expect(AppColors.gold, const Color(0xFFD7B679));
+      expect(AppColors.textPrimary, const Color(0xFF241B1D));
       expect(AppColors.tabPrimary, AppColors.primary);
       expect(AppColors.tabBg, AppColors.background);
       expect(AppTheme.primary, AppColors.primary);
       expect(AppTheme.surface, AppColors.background);
-      expect(AppRadius.lg, 20);
+      expect(AppRadius.lg, 22);
       expect(AppSpacing.md, 16);
+      expect(AppComponents.buttonHeight, 58);
     });
   });
 
